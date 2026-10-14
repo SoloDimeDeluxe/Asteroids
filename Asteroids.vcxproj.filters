@@ -36,6 +36,9 @@
     <ClCompile Include="src\screens\menu.cpp">
       <Filter>src\screens</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\screen_wrap.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
     <ClCompile Include="src\utils\ui.cpp">
       <Filter>src\utils</Filter>
     </ClCompile>
@@ -60,6 +63,9 @@
       <Filter>src\screens</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\config.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\screen_wrap.h">
       <Filter>src\utils</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\ui.h">

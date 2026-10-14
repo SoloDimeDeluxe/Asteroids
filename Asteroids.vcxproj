@@ -104,6 +104,7 @@
     <ClCompile Include="src\screens\credits.cpp" />
     <ClCompile Include="src\screens\gameplay.cpp" />
     <ClCompile Include="src\screens\menu.cpp" />
+    <ClCompile Include="src\utils\screen_wrap.cpp" />
     <ClCompile Include="src\utils\ui.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -114,6 +115,7 @@
     <ClInclude Include="src\screens\gameplay.h" />
     <ClInclude Include="src\screens\menu.h" />
     <ClInclude Include="src\utils\config.h" />
+    <ClInclude Include="src\utils\screen_wrap.h" />
     <ClInclude Include="src\utils\ui.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "utils/config.h"
+#include "utils/screen_wrap.h"
 
 namespace ReyesCuadra::ship
 {
@@ -14,6 +15,7 @@ namespace ReyesCuadra::ship
 		constexpr float HALF_WIDTH = 12.0f;    // Mitad del ancho de la cola
 		constexpr float FLAME_LENGTH = 28.0f;  // Del centro a la punta del fuego
 		constexpr float FLAME_HALF_WIDTH = 6.0f;
+		constexpr float WRAP_MARGIN = FLAME_LENGTH; // Lo mas lejos que se dibuja algo desde el centro
 
 		// Movimiento
 		constexpr float ACCELERATION = 300.0f; // Pixeles por segundo, cada segundo
@@ -98,6 +100,9 @@ namespace ReyesCuadra::ship
 		// Gravedad cero: nunca frena sola, sigue con la misma velocidad
 		ship.position.x += ship.velocity.x * deltaTime;
 		ship.position.y += ship.velocity.y * deltaTime;
+
+		// Si sale por un borde, aparece por el contrario
+		screen_wrap::WrapPosition(ship.position, WRAP_MARGIN);
 	}
 
 	void Draw(const Ship& ship)
