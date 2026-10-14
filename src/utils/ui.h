@@ -11,6 +11,9 @@ namespace ReyesCuadra::ui
 		const char* text;
 	};
 
+	// Boton en una posicion cualquiera
+	Button CreateButton(float positionX, float positionY, float width, float height, const char* text);
+
 	// Boton centrado en X
 	Button CreateCenteredButton(float positionY, float width, float height, const char* text);
 

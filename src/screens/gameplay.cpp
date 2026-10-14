@@ -10,11 +10,26 @@ namespace ReyesCuadra::gameplay
 {
 	namespace
 	{
-		constexpr int HINT_FONT_SIZE = 20;
 		constexpr int PAUSE_FONT_SIZE = 60;
+		constexpr int PAUSE_TITLE_POSITION_Y = 220;
+
+		// Boton de pausa (arriba a la derecha)
+		constexpr float PAUSE_BUTTON_WIDTH = 140.0f;
+		constexpr float PAUSE_BUTTON_HEIGHT = 45.0f;
+		constexpr float PAUSE_BUTTON_MARGIN = 15.0f;
+
+		// Botones del menu de pausa
+		constexpr float MENU_BUTTON_WIDTH = 260.0f;
+		constexpr float MENU_BUTTON_HEIGHT = 60.0f;
+		constexpr float RESUME_BUTTON_POSITION_Y = 340.0f;
+		constexpr float BUTTON_SPACING = 90.0f;
 
 		bool isPaused = false;
 		ship::Ship playerShip = {};
+
+		ui::Button pauseButton = {};
+		ui::Button resumeButton = {};
+		ui::Button menuButton = {};
 
 		// Aca va la logica de la partida (nave, asteroides, balas)
 		void UpdateMatch()
@@ -33,9 +48,10 @@ namespace ReyesCuadra::gameplay
 			// Capa oscura sobre la partida
 			DrawRectangle(0, 0, config::SCREEN_WIDTH, config::SCREEN_HEIGHT, Fade(BLACK, 0.7f));
 
-			ui::DrawCenteredText("PAUSA", config::SCREEN_HEIGHT / 2 - PAUSE_FONT_SIZE, PAUSE_FONT_SIZE, RAYWHITE);
-			ui::DrawCenteredText("P para continuar - ESC para volver al menu",
-				config::SCREEN_HEIGHT / 2 + HINT_FONT_SIZE, HINT_FONT_SIZE, LIGHTGRAY);
+			ui::DrawCenteredText("PAUSA", PAUSE_TITLE_POSITION_Y, PAUSE_FONT_SIZE, RAYWHITE);
+
+			ui::DrawButton(resumeButton);
+			ui::DrawButton(menuButton);
 		}
 	}
 
@@ -43,23 +59,41 @@ namespace ReyesCuadra::gameplay
 	{
 		isPaused = false;
 		playerShip = ship::Create();
+
+		const float pauseButtonX = static_cast<float>(config::SCREEN_WIDTH) - PAUSE_BUTTON_WIDTH - PAUSE_BUTTON_MARGIN;
+		pauseButton = ui::CreateButton(pauseButtonX, PAUSE_BUTTON_MARGIN, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, "PAUSA");
+
+		resumeButton = ui::CreateCenteredButton(RESUME_BUTTON_POSITION_Y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "CONTINUAR");
+		menuButton = ui::CreateCenteredButton(RESUME_BUTTON_POSITION_Y + BUTTON_SPACING, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "MENU");
 	}
 
 	game::Screen Update()
 	{
-		if (IsKeyPressed(KEY_ESCAPE))
-		{
-			return game::Screen::Menu;
-		}
+		// P o ESC tambien pausan/reanudan (opcional, por teclado)
+		const bool pauseKeyPressed = IsKeyPressed(KEY_P) || IsKeyPressed(KEY_ESCAPE);
 
-		if (IsKeyPressed(KEY_P))
+		if (isPaused)
 		{
-			isPaused = !isPaused;
-		}
+			if (ui::IsButtonClicked(menuButton))
+			{
+				return game::Screen::Menu;
+			}
 
-		if (!isPaused)
+			if (ui::IsButtonClicked(resumeButton) || pauseKeyPressed)
+			{
+				isPaused = false;
+			}
+		}
+		else
 		{
-			UpdateMatch();
+			if (ui::IsButtonClicked(pauseButton) || pauseKeyPressed)
+			{
+				isPaused = true;
+			}
+			else
+			{
+				UpdateMatch();
+			}
 		}
 
 		return game::Screen::Gameplay;
@@ -75,7 +109,7 @@ namespace ReyesCuadra::gameplay
 		}
 		else
 		{
-			DrawText("P: pausa  -  ESC: menu", 10, 10, HINT_FONT_SIZE, GRAY);
+			ui::DrawButton(pauseButton);
 		}
 	}
 }
