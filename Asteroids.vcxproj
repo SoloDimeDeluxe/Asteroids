@@ -99,6 +99,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\entities\ship.cpp" />
     <ClCompile Include="src\game\game.cpp" />
     <ClCompile Include="src\screens\credits.cpp" />
     <ClCompile Include="src\screens\gameplay.cpp" />
@@ -106,6 +107,7 @@
     <ClCompile Include="src\utils\ui.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\entities\ship.h" />
     <ClInclude Include="src\game\game.h" />
     <ClInclude Include="src\game\screen.h" />
     <ClInclude Include="src\screens\credits.h" />
