@@ -13,17 +13,24 @@ namespace ReyesCuadra::ui
 		const Color BUTTON_HOVER_COLOR = SKYBLUE;
 	}
 
-	Button CreateCenteredButton(float positionY, float width, float height, const char* text)
+	Button CreateButton(float positionX, float positionY, float width, float height, const char* text)
 	{
 		Button button = {};
 
-		button.bounds.x = (static_cast<float>(config::SCREEN_WIDTH) - width) / 2.0f;
+		button.bounds.x = positionX;
 		button.bounds.y = positionY;
 		button.bounds.width = width;
 		button.bounds.height = height;
 		button.text = text;
 
 		return button;
+	}
+
+	Button CreateCenteredButton(float positionY, float width, float height, const char* text)
+	{
+		const float positionX = (static_cast<float>(config::SCREEN_WIDTH) - width) / 2.0f;
+
+		return CreateButton(positionX, positionY, width, height, text);
 	}
 
 	bool IsButtonHovered(const Button& button)
