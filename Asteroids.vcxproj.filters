@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{3A1F0C52-6E2B-4C1D-9B7A-1F2E3D4C5B60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\game">
+      <UniqueIdentifier>{4B2E1D63-7F3C-4D2E-8C8B-2A3F4E5D6C71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\screens">
+      <UniqueIdentifier>{5C3F2E74-8A4D-4E3F-9D9C-3B4A5F6E7D82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\utils">
+      <UniqueIdentifier>{6D4A3F85-9B5E-4F4A-AEAD-4C5B6A7F8E93}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\game.cpp">
+      <Filter>src\game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\screens\credits.cpp">
+      <Filter>src\screens</Filter>
+    </ClCompile>
+    <ClCompile Include="src\screens\gameplay.cpp">
+      <Filter>src\screens</Filter>
+    </ClCompile>
+    <ClCompile Include="src\screens\menu.cpp">
+      <Filter>src\screens</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\ui.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\game\game.h">
+      <Filter>src\game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\screen.h">
+      <Filter>src\game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\screens\credits.h">
+      <Filter>src\screens</Filter>
+    </ClInclude>
+    <ClInclude Include="src\screens\gameplay.h">
+      <Filter>src\screens</Filter>
+    </ClInclude>
+    <ClInclude Include="src\screens\menu.h">
+      <Filter>src\screens</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\config.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\ui.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
