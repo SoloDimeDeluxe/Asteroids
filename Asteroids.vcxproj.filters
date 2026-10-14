@@ -4,6 +4,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{3A1F0C52-6E2B-4C1D-9B7A-1F2E3D4C5B60}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\entities">
+      <UniqueIdentifier>{7E5B4A96-AC6F-4A5B-BFBE-5D6C7B8A9FA4}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\game">
       <UniqueIdentifier>{4B2E1D63-7F3C-4D2E-8C8B-2A3F4E5D6C71}</UniqueIdentifier>
     </Filter>
@@ -17,6 +20,9 @@
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\entities\ship.cpp">
+      <Filter>src\entities</Filter>
     </ClCompile>
     <ClCompile Include="src\game\game.cpp">
       <Filter>src\game</Filter>
@@ -35,6 +41,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\entities\ship.h">
+      <Filter>src\entities</Filter>
+    </ClInclude>
     <ClInclude Include="src\game\game.h">
       <Filter>src\game</Filter>
     </ClInclude>

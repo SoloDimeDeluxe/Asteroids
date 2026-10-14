@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 
+#include "entities/ship.h"
 #include "utils/config.h"
 #include "utils/ui.h"
 
@@ -9,22 +10,22 @@ namespace ReyesCuadra::gameplay
 {
 	namespace
 	{
-		constexpr int PLACEHOLDER_FONT_SIZE = 30;
 		constexpr int HINT_FONT_SIZE = 20;
 		constexpr int PAUSE_FONT_SIZE = 60;
 
 		bool isPaused = false;
+		ship::Ship playerShip = {};
 
 		// Aca va la logica de la partida (nave, asteroides, balas)
 		void UpdateMatch()
 		{
+			ship::Update(playerShip);
 		}
 
 		// Aca se dibuja la partida
 		void DrawMatch()
 		{
-			ui::DrawCenteredText("Aca van a ir la nave y los asteroides",
-				config::SCREEN_HEIGHT / 2 - PLACEHOLDER_FONT_SIZE, PLACEHOLDER_FONT_SIZE, DARKGRAY);
+			ship::Draw(playerShip);
 		}
 
 		void DrawPauseOverlay()
@@ -41,6 +42,7 @@ namespace ReyesCuadra::gameplay
 	void Init()
 	{
 		isPaused = false;
+		playerShip = ship::Create();
 	}
 
 	game::Screen Update()
