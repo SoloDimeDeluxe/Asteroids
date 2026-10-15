@@ -17,4 +17,7 @@ namespace ReyesCuadra::ship
 
 	void Update(Ship& ship);
 	void Draw(const Ship& ship);
+
+	// Punta de la nave (de donde salen las balas)
+	Vector2 GetNosePosition(const Ship& ship);
 }

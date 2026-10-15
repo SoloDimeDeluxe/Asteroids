@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 
+#include "entities/bullet.h"
 #include "entities/ship.h"
 #include "utils/config.h"
 #include "utils/ui.h"
@@ -26,20 +27,39 @@ namespace ReyesCuadra::gameplay
 
 		bool isPaused = false;
 		ship::Ship playerShip = {};
+		bullet::Bullet bullets[bullet::MAX_BULLETS] = {};
 
 		ui::Button pauseButton = {};
 		ui::Button resumeButton = {};
 		ui::Button menuButton = {};
 
+		// Clic izquierdo (o espacio) dispara.
+		// Si el mouse esta sobre el boton de pausa no dispara,
+		// asi el clic para pausar no tira una bala.
+		bool IsFirePressed()
+		{
+			const bool clickedToFire = IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !ui::IsButtonHovered(pauseButton);
+
+			return clickedToFire || IsKeyPressed(KEY_SPACE);
+		}
+
 		// Aca va la logica de la partida (nave, asteroides, balas)
 		void UpdateMatch()
 		{
 			ship::Update(playerShip);
+
+			if (IsFirePressed())
+			{
+				bullet::Fire(bullets, ship::GetNosePosition(playerShip), playerShip.rotation);
+			}
+
+			bullet::UpdateAll(bullets);
 		}
 
 		// Aca se dibuja la partida
 		void DrawMatch()
 		{
+			bullet::DrawAll(bullets);
 			ship::Draw(playerShip);
 		}
 
@@ -59,6 +79,7 @@ namespace ReyesCuadra::gameplay
 	{
 		isPaused = false;
 		playerShip = ship::Create();
+		bullet::InitAll(bullets);
 
 		const float pauseButtonX = static_cast<float>(config::SCREEN_WIDTH) - PAUSE_BUTTON_WIDTH - PAUSE_BUTTON_MARGIN;
 		pauseButton = ui::CreateButton(pauseButtonX, PAUSE_BUTTON_MARGIN, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, "PAUSA");
