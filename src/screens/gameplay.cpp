@@ -13,26 +13,29 @@ namespace ReyesCuadra::gameplay
 {
 	namespace
 	{
-		constexpr int PAUSE_FONT_SIZE = 60;
-		constexpr int PAUSE_TITLE_POSITION_Y = 220;
+		constexpr int TITLE_FONT_SIZE = 60;
+		constexpr int TITLE_POSITION_Y = 200;
 
 		// Boton de pausa (arriba a la derecha)
 		constexpr float PAUSE_BUTTON_WIDTH = 140.0f;
 		constexpr float PAUSE_BUTTON_HEIGHT = 45.0f;
 		constexpr float PAUSE_BUTTON_MARGIN = 15.0f;
 
-		// Botones del menu de pausa
-		constexpr float MENU_BUTTON_WIDTH = 260.0f;
+		// Botones de los menus de pausa y derrota
+		constexpr float MENU_BUTTON_WIDTH = 320.0f;
 		constexpr float MENU_BUTTON_HEIGHT = 60.0f;
-		constexpr float RESUME_BUTTON_POSITION_Y = 340.0f;
+		constexpr float FIRST_BUTTON_POSITION_Y = 380.0f;
 		constexpr float BUTTON_SPACING = 90.0f;
 
-		// Vidas
+		// Pantalla de derrota
+		constexpr int FINAL_SCORE_FONT_SIZE = 35;
+		constexpr int FINAL_SCORE_POSITION_Y = 290;
+
+		// Vidas y puntaje (HUD)
 		constexpr int INITIAL_LIVES = 3;
 		constexpr int HUD_FONT_SIZE = 25;
 		constexpr int HUD_MARGIN = 15;
-		constexpr int GAME_OVER_FONT_SIZE = 60;
-		constexpr int GAME_OVER_HINT_FONT_SIZE = 20;
+		constexpr int HUD_LINE_SPACING = 30;
 
 		// Aparicion de asteroides
 		constexpr int INITIAL_ASTEROIDS = 4;
@@ -42,14 +45,22 @@ namespace ReyesCuadra::gameplay
 		bool isPaused = false;
 		bool isGameOver = false;
 		int lives = INITIAL_LIVES;
+		int score = 0;                              // Asteroides destruidos con balas
+
 		ship::Ship playerShip = {};
 		bullet::Bullet bullets[bullet::MAX_BULLETS] = {};
 		asteroid::Asteroid asteroids[asteroid::MAX_ASTEROIDS] = {};
 		float spawnTimer = 0.0f;
 
 		ui::Button pauseButton = {};
+
+		// Menu de pausa
 		ui::Button resumeButton = {};
-		ui::Button menuButton = {};
+		ui::Button pauseMenuButton = {};
+
+		// Menu de derrota
+		ui::Button retryButton = {};
+		ui::Button gameOverMenuButton = {};
 
 		// Clic izquierdo (o espacio) dispara.
 		// Si el mouse esta sobre el boton de pausa no dispara,
@@ -100,6 +111,9 @@ namespace ReyesCuadra::gameplay
 						bullets[bulletIndex].isActive = false;
 						asteroid::Destroy(asteroids, asteroidIndex);
 
+						// Un punto por cada asteroide destruido
+						score++;
+
 						// Esta bala ya se gasto, pasa a la siguiente
 						break;
 					}
@@ -125,7 +139,7 @@ namespace ReyesCuadra::gameplay
 				if (collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
 					asteroids[asteroidIndex].position, asteroids[asteroidIndex].radius))
 				{
-					// El asteroide tambien se rompe con el choque
+					// El asteroide tambien se rompe con el choque (pero no suma puntos)
 					asteroid::Destroy(asteroids, asteroidIndex);
 					lives--;
 
@@ -147,7 +161,7 @@ namespace ReyesCuadra::gameplay
 		// Aca va la logica de la partida (nave, asteroides, balas)
 		void UpdateMatch()
 		{
-			// Sin vidas la nave ya no se mueve ni dispara, pero los asteroides siguen
+			// Sin vidas la nave ya no se mueve ni dispara, pero los asteroides siguen de fondo
 			if (!isGameOver)
 			{
 				ship::Update(playerShip);
@@ -174,16 +188,7 @@ namespace ReyesCuadra::gameplay
 		void DrawHud()
 		{
 			DrawText(TextFormat("VIDAS: %d", lives), HUD_MARGIN, HUD_MARGIN, HUD_FONT_SIZE, RAYWHITE);
-		}
-
-		// Provisorio hasta la pantalla de derrota (v0.24)
-		void DrawGameOver()
-		{
-			const int centerY = config::SCREEN_HEIGHT / 2;
-
-			ui::DrawCenteredText("GAME OVER", centerY - GAME_OVER_FONT_SIZE, GAME_OVER_FONT_SIZE, RED);
-			ui::DrawCenteredText("Usa PAUSA > MENU para volver",
-				centerY + GAME_OVER_HINT_FONT_SIZE, GAME_OVER_HINT_FONT_SIZE, LIGHTGRAY);
+			DrawText(TextFormat("PUNTAJE: %d", score), HUD_MARGIN, HUD_MARGIN + HUD_LINE_SPACING, HUD_FONT_SIZE, RAYWHITE);
 		}
 
 		// Aca se dibuja la partida
@@ -200,15 +205,68 @@ namespace ReyesCuadra::gameplay
 			DrawHud();
 		}
 
+		// Capa oscura sobre la partida (para pausa y derrota)
+		void DrawDarkLayer()
+		{
+			DrawRectangle(0, 0, config::SCREEN_WIDTH, config::SCREEN_HEIGHT, Fade(BLACK, 0.7f));
+		}
+
 		void DrawPauseOverlay()
 		{
-			// Capa oscura sobre la partida
-			DrawRectangle(0, 0, config::SCREEN_WIDTH, config::SCREEN_HEIGHT, Fade(BLACK, 0.7f));
+			DrawDarkLayer();
 
-			ui::DrawCenteredText("PAUSA", PAUSE_TITLE_POSITION_Y, PAUSE_FONT_SIZE, RAYWHITE);
+			ui::DrawCenteredText("PAUSA", TITLE_POSITION_Y, TITLE_FONT_SIZE, RAYWHITE);
 
 			ui::DrawButton(resumeButton);
-			ui::DrawButton(menuButton);
+			ui::DrawButton(pauseMenuButton);
+		}
+
+		void DrawGameOverOverlay()
+		{
+			DrawDarkLayer();
+
+			ui::DrawCenteredText("GAME OVER", TITLE_POSITION_Y, TITLE_FONT_SIZE, RED);
+			ui::DrawCenteredText(TextFormat("Asteroides destruidos: %d", score),
+				FINAL_SCORE_POSITION_Y, FINAL_SCORE_FONT_SIZE, RAYWHITE);
+
+			ui::DrawButton(retryButton);
+			ui::DrawButton(gameOverMenuButton);
+		}
+
+		// Menu de derrota: volver a jugar o ir al menu
+		game::Screen UpdateGameOver()
+		{
+			if (ui::IsButtonClicked(gameOverMenuButton) || IsKeyPressed(KEY_ESCAPE))
+			{
+				return game::Screen::Menu;
+			}
+
+			if (ui::IsButtonClicked(retryButton))
+			{
+				// Reinicia todo: vidas, puntaje, nave y asteroides
+				Init();
+				return game::Screen::Gameplay;
+			}
+
+			// Los asteroides siguen moviendose de fondo
+			UpdateMatch();
+
+			return game::Screen::Gameplay;
+		}
+
+		// Menu de pausa: continuar o ir al menu
+		void UpdatePause(bool pauseKeyPressed, game::Screen& nextScreen)
+		{
+			if (ui::IsButtonClicked(pauseMenuButton))
+			{
+				nextScreen = game::Screen::Menu;
+				return;
+			}
+
+			if (ui::IsButtonClicked(resumeButton) || pauseKeyPressed)
+			{
+				isPaused = false;
+			}
 		}
 	}
 
@@ -217,6 +275,8 @@ namespace ReyesCuadra::gameplay
 		isPaused = false;
 		isGameOver = false;
 		lives = INITIAL_LIVES;
+		score = 0;
+
 		playerShip = ship::Create();
 		bullet::InitAll(bullets);
 
@@ -231,52 +291,52 @@ namespace ReyesCuadra::gameplay
 		const float pauseButtonX = static_cast<float>(config::SCREEN_WIDTH) - PAUSE_BUTTON_WIDTH - PAUSE_BUTTON_MARGIN;
 		pauseButton = ui::CreateButton(pauseButtonX, PAUSE_BUTTON_MARGIN, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, "PAUSA");
 
-		resumeButton = ui::CreateCenteredButton(RESUME_BUTTON_POSITION_Y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "CONTINUAR");
-		menuButton = ui::CreateCenteredButton(RESUME_BUTTON_POSITION_Y + BUTTON_SPACING, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "MENU");
+		const float secondButtonPositionY = FIRST_BUTTON_POSITION_Y + BUTTON_SPACING;
+
+		resumeButton = ui::CreateCenteredButton(FIRST_BUTTON_POSITION_Y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "CONTINUAR");
+		pauseMenuButton = ui::CreateCenteredButton(secondButtonPositionY, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "MENU");
+
+		retryButton = ui::CreateCenteredButton(FIRST_BUTTON_POSITION_Y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "VOLVER A JUGAR");
+		gameOverMenuButton = ui::CreateCenteredButton(secondButtonPositionY, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "MENU");
 	}
 
 	game::Screen Update()
 	{
+		if (isGameOver)
+		{
+			return UpdateGameOver();
+		}
+
 		// P o ESC tambien pausan/reanudan (opcional, por teclado)
 		const bool pauseKeyPressed = IsKeyPressed(KEY_P) || IsKeyPressed(KEY_ESCAPE);
 
+		game::Screen nextScreen = game::Screen::Gameplay;
+
 		if (isPaused)
 		{
-			if (ui::IsButtonClicked(menuButton))
-			{
-				return game::Screen::Menu;
-			}
-
-			if (ui::IsButtonClicked(resumeButton) || pauseKeyPressed)
-			{
-				isPaused = false;
-			}
+			UpdatePause(pauseKeyPressed, nextScreen);
+		}
+		else if (ui::IsButtonClicked(pauseButton) || pauseKeyPressed)
+		{
+			isPaused = true;
 		}
 		else
 		{
-			if (ui::IsButtonClicked(pauseButton) || pauseKeyPressed)
-			{
-				isPaused = true;
-			}
-			else
-			{
-				UpdateMatch();
-			}
+			UpdateMatch();
 		}
 
-		return game::Screen::Gameplay;
+		return nextScreen;
 	}
 
 	void Draw()
 	{
 		DrawMatch();
 
-		if (isGameOver && !isPaused)
+		if (isGameOver)
 		{
-			DrawGameOver();
+			DrawGameOverOverlay();
 		}
-
-		if (isPaused)
+		else if (isPaused)
 		{
 			DrawPauseOverlay();
 		}
