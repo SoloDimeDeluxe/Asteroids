@@ -7,6 +7,9 @@ namespace ReyesCuadra::bullet
 	// Cantidad maxima de balas en pantalla al mismo tiempo
 	constexpr int MAX_BULLETS = 20;
 
+	// Radio de cada bala (tambien se usa para las colisiones)
+	constexpr float RADIUS = 2.5f;
+
 	struct Bullet
 	{
 		Vector2 position;

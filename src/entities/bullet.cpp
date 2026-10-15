@@ -10,7 +10,6 @@ namespace ReyesCuadra::bullet
 	{
 		constexpr float SPEED = 600.0f;    // Pixeles por segundo
 		constexpr float LIFE_TIME = 1.0f;  // Segundos
-		constexpr float RADIUS = 2.5f;
 
 		const Color BULLET_COLOR = RAYWHITE;
 	}

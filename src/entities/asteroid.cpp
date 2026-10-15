@@ -27,6 +27,9 @@ namespace ReyesCuadra::asteroid
 		// Zona central a la que apuntan al aparecer (para que entren a la pantalla)
 		constexpr float TARGET_AREA_MARGIN = 200.0f;
 
+		// Los dos pedazos salen abriendose hacia los costados de la direccion original
+		constexpr float SPLIT_ANGLE = 35.0f * DEG2RAD;
+
 		constexpr int SIDES = 8;               // Lados del poligono
 		constexpr float LINE_THICKNESS = 2.0f;
 
@@ -139,6 +142,29 @@ namespace ReyesCuadra::asteroid
 		const float direction = std::atan2(targetY - position.y, targetX - position.x);
 
 		Spawn(asteroids, position, direction, Size::Large);
+	}
+
+	void Destroy(Asteroid asteroids[], int index)
+	{
+		// Copia los datos antes de liberar el lugar
+		const Asteroid destroyed = asteroids[index];
+
+		asteroids[index].isActive = false;
+
+		// El chico desaparece sin dividirse
+		if (destroyed.size == Size::Small)
+		{
+			return;
+		}
+
+		const Size smallerSize = (destroyed.size == Size::Large) ? Size::Medium : Size::Small;
+
+		// Direccion en la que venia (angulo de su vector velocidad)
+		const float direction = std::atan2(destroyed.velocity.y, destroyed.velocity.x);
+
+		// Un pedazo para cada lado
+		Spawn(asteroids, destroyed.position, direction + SPLIT_ANGLE, smallerSize);
+		Spawn(asteroids, destroyed.position, direction - SPLIT_ANGLE, smallerSize);
 	}
 
 	int CountActive(const Asteroid asteroids[])

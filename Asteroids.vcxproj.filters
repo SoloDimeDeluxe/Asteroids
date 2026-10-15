@@ -42,6 +42,9 @@
     <ClCompile Include="src\screens\menu.cpp">
       <Filter>src\screens</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\collision.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
     <ClCompile Include="src\utils\screen_wrap.cpp">
       <Filter>src\utils</Filter>
     </ClCompile>
@@ -73,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="src\screens\menu.h">
       <Filter>src\screens</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\collision.h">
+      <Filter>src\utils</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\config.h">
       <Filter>src\utils</Filter>
