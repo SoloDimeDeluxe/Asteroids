@@ -105,10 +105,15 @@ namespace ReyesCuadra::ship
 		screen_wrap::WrapPosition(ship.position, WRAP_MARGIN);
 	}
 
+	Vector2 GetNosePosition(const Ship& ship)
+	{
+		return ToScreen(ship, NOSE_LENGTH, 0.0f);
+	}
+
 	void Draw(const Ship& ship)
 	{
 		// Triangulo: punta adelante, dos esquinas atras
-		const Vector2 nose = ToScreen(ship, NOSE_LENGTH, 0.0f);
+		const Vector2 nose = GetNosePosition(ship);
 		const Vector2 leftCorner = ToScreen(ship, -TAIL_LENGTH, -HALF_WIDTH);
 		const Vector2 rightCorner = ToScreen(ship, -TAIL_LENGTH, HALF_WIDTH);
 

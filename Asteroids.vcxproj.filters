@@ -21,6 +21,9 @@
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\entities\bullet.cpp">
+      <Filter>src\entities</Filter>
+    </ClCompile>
     <ClCompile Include="src\entities\ship.cpp">
       <Filter>src\entities</Filter>
     </ClCompile>
@@ -44,6 +47,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\entities\bullet.h">
+      <Filter>src\entities</Filter>
+    </ClInclude>
     <ClInclude Include="src\entities\ship.h">
       <Filter>src\entities</Filter>
     </ClInclude>
