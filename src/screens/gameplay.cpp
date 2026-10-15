@@ -27,12 +27,21 @@ namespace ReyesCuadra::gameplay
 		constexpr float RESUME_BUTTON_POSITION_Y = 340.0f;
 		constexpr float BUTTON_SPACING = 90.0f;
 
+		// Vidas
+		constexpr int INITIAL_LIVES = 3;
+		constexpr int HUD_FONT_SIZE = 25;
+		constexpr int HUD_MARGIN = 15;
+		constexpr int GAME_OVER_FONT_SIZE = 60;
+		constexpr int GAME_OVER_HINT_FONT_SIZE = 20;
+
 		// Aparicion de asteroides
 		constexpr int INITIAL_ASTEROIDS = 4;
 		constexpr float SPAWN_INTERVAL = 5.0f;      // Segundos entre cada asteroide nuevo
 		constexpr int MAX_ACTIVE_FOR_SPAWN = 8;     // No aparecen mas si ya hay estos
 
 		bool isPaused = false;
+		bool isGameOver = false;
+		int lives = INITIAL_LIVES;
 		ship::Ship playerShip = {};
 		bullet::Bullet bullets[bullet::MAX_BULLETS] = {};
 		asteroid::Asteroid asteroids[asteroid::MAX_ASTEROIDS] = {};
@@ -98,14 +107,55 @@ namespace ReyesCuadra::gameplay
 			}
 		}
 
+		// Si la nave toca un asteroide pierde una vida (salvo que sea invulnerable)
+		void CheckShipAsteroidCollisions()
+		{
+			if (ship::IsInvulnerable(playerShip))
+			{
+				return;
+			}
+
+			for (int asteroidIndex = 0; asteroidIndex < asteroid::MAX_ASTEROIDS; asteroidIndex++)
+			{
+				if (!asteroids[asteroidIndex].isActive)
+				{
+					continue;
+				}
+
+				if (collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
+					asteroids[asteroidIndex].position, asteroids[asteroidIndex].radius))
+				{
+					// El asteroide tambien se rompe con el choque
+					asteroid::Destroy(asteroids, asteroidIndex);
+					lives--;
+
+					if (lives > 0)
+					{
+						ship::Respawn(playerShip);
+					}
+					else
+					{
+						isGameOver = true;
+					}
+
+					// Un solo choque por frame
+					return;
+				}
+			}
+		}
+
 		// Aca va la logica de la partida (nave, asteroides, balas)
 		void UpdateMatch()
 		{
-			ship::Update(playerShip);
-
-			if (IsFirePressed())
+			// Sin vidas la nave ya no se mueve ni dispara, pero los asteroides siguen
+			if (!isGameOver)
 			{
-				bullet::Fire(bullets, ship::GetNosePosition(playerShip), playerShip.rotation);
+				ship::Update(playerShip);
+
+				if (IsFirePressed())
+				{
+					bullet::Fire(bullets, ship::GetNosePosition(playerShip), playerShip.rotation);
+				}
 			}
 
 			bullet::UpdateAll(bullets);
@@ -114,6 +164,26 @@ namespace ReyesCuadra::gameplay
 			asteroid::UpdateAll(asteroids);
 
 			CheckBulletAsteroidCollisions();
+
+			if (!isGameOver)
+			{
+				CheckShipAsteroidCollisions();
+			}
+		}
+
+		void DrawHud()
+		{
+			DrawText(TextFormat("VIDAS: %d", lives), HUD_MARGIN, HUD_MARGIN, HUD_FONT_SIZE, RAYWHITE);
+		}
+
+		// Provisorio hasta la pantalla de derrota (v0.24)
+		void DrawGameOver()
+		{
+			const int centerY = config::SCREEN_HEIGHT / 2;
+
+			ui::DrawCenteredText("GAME OVER", centerY - GAME_OVER_FONT_SIZE, GAME_OVER_FONT_SIZE, RED);
+			ui::DrawCenteredText("Usa PAUSA > MENU para volver",
+				centerY + GAME_OVER_HINT_FONT_SIZE, GAME_OVER_HINT_FONT_SIZE, LIGHTGRAY);
 		}
 
 		// Aca se dibuja la partida
@@ -121,7 +191,13 @@ namespace ReyesCuadra::gameplay
 		{
 			asteroid::DrawAll(asteroids);
 			bullet::DrawAll(bullets);
-			ship::Draw(playerShip);
+
+			if (!isGameOver)
+			{
+				ship::Draw(playerShip);
+			}
+
+			DrawHud();
 		}
 
 		void DrawPauseOverlay()
@@ -139,6 +215,8 @@ namespace ReyesCuadra::gameplay
 	void Init()
 	{
 		isPaused = false;
+		isGameOver = false;
+		lives = INITIAL_LIVES;
 		playerShip = ship::Create();
 		bullet::InitAll(bullets);
 
@@ -192,6 +270,11 @@ namespace ReyesCuadra::gameplay
 	void Draw()
 	{
 		DrawMatch();
+
+		if (isGameOver && !isPaused)
+		{
+			DrawGameOver();
+		}
 
 		if (isPaused)
 		{

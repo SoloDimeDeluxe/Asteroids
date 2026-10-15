@@ -21,6 +21,10 @@ namespace ReyesCuadra::ship
 		constexpr float ACCELERATION = 300.0f; // Pixeles por segundo, cada segundo
 		constexpr float MAX_SPEED = 450.0f;    // Pixeles por segundo
 
+		// Invulnerabilidad al reaparecer
+		constexpr float RESPAWN_INVULNERABLE_TIME = 3.0f; // Segundos
+		constexpr float BLINK_INTERVAL = 0.15f;           // Segundos entre parpadeos
+
 		const Color SHIP_COLOR = RAYWHITE;
 		const Color FLAME_COLOR = ORANGE;
 
@@ -78,6 +82,7 @@ namespace ReyesCuadra::ship
 		ship.velocity = { 0.0f, 0.0f };
 		ship.rotation = 0.0f;
 		ship.isAccelerating = false;
+		ship.invulnerableTimeLeft = 0.0f;
 
 		return ship;
 	}
@@ -103,6 +108,23 @@ namespace ReyesCuadra::ship
 
 		// Si sale por un borde, aparece por el contrario
 		screen_wrap::WrapPosition(ship.position, WRAP_MARGIN);
+
+		// Descuenta el tiempo de invulnerabilidad
+		if (ship.invulnerableTimeLeft > 0.0f)
+		{
+			ship.invulnerableTimeLeft -= deltaTime;
+		}
+	}
+
+	void Respawn(Ship& ship)
+	{
+		ship = Create();
+		ship.invulnerableTimeLeft = RESPAWN_INVULNERABLE_TIME;
+	}
+
+	bool IsInvulnerable(const Ship& ship)
+	{
+		return ship.invulnerableTimeLeft > 0.0f;
 	}
 
 	Vector2 GetNosePosition(const Ship& ship)
@@ -112,6 +134,17 @@ namespace ReyesCuadra::ship
 
 	void Draw(const Ship& ship)
 	{
+		// Mientras es invulnerable parpadea: se dibuja un intervalo si y otro no
+		if (IsInvulnerable(ship))
+		{
+			const int blinkStep = static_cast<int>(ship.invulnerableTimeLeft / BLINK_INTERVAL);
+
+			if (blinkStep % 2 == 1)
+			{
+				return;
+			}
+		}
+
 		// Triangulo: punta adelante, dos esquinas atras
 		const Vector2 nose = GetNosePosition(ship);
 		const Vector2 leftCorner = ToScreen(ship, -TAIL_LENGTH, -HALF_WIDTH);
