@@ -5,6 +5,7 @@
 #include "entities/asteroid.h"
 #include "entities/bullet.h"
 #include "entities/ship.h"
+#include "utils/collision.h"
 #include "utils/config.h"
 #include "utils/ui.h"
 
@@ -67,6 +68,36 @@ namespace ReyesCuadra::gameplay
 			}
 		}
 
+		// Si una bala toca un asteroide, se apagan los dos (y el asteroide se divide)
+		void CheckBulletAsteroidCollisions()
+		{
+			for (int bulletIndex = 0; bulletIndex < bullet::MAX_BULLETS; bulletIndex++)
+			{
+				if (!bullets[bulletIndex].isActive)
+				{
+					continue;
+				}
+
+				for (int asteroidIndex = 0; asteroidIndex < asteroid::MAX_ASTEROIDS; asteroidIndex++)
+				{
+					if (!asteroids[asteroidIndex].isActive)
+					{
+						continue;
+					}
+
+					if (collision::AreCirclesColliding(bullets[bulletIndex].position, bullet::RADIUS,
+						asteroids[asteroidIndex].position, asteroids[asteroidIndex].radius))
+					{
+						bullets[bulletIndex].isActive = false;
+						asteroid::Destroy(asteroids, asteroidIndex);
+
+						// Esta bala ya se gasto, pasa a la siguiente
+						break;
+					}
+				}
+			}
+		}
+
 		// Aca va la logica de la partida (nave, asteroides, balas)
 		void UpdateMatch()
 		{
@@ -81,6 +112,8 @@ namespace ReyesCuadra::gameplay
 
 			UpdateAsteroidSpawn();
 			asteroid::UpdateAll(asteroids);
+
+			CheckBulletAsteroidCollisions();
 		}
 
 		// Aca se dibuja la partida
