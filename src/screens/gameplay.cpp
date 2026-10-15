@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 
+#include "entities/asteroid.h"
 #include "entities/bullet.h"
 #include "entities/ship.h"
 #include "utils/config.h"
@@ -25,9 +26,16 @@ namespace ReyesCuadra::gameplay
 		constexpr float RESUME_BUTTON_POSITION_Y = 340.0f;
 		constexpr float BUTTON_SPACING = 90.0f;
 
+		// Aparicion de asteroides
+		constexpr int INITIAL_ASTEROIDS = 4;
+		constexpr float SPAWN_INTERVAL = 5.0f;      // Segundos entre cada asteroide nuevo
+		constexpr int MAX_ACTIVE_FOR_SPAWN = 8;     // No aparecen mas si ya hay estos
+
 		bool isPaused = false;
 		ship::Ship playerShip = {};
 		bullet::Bullet bullets[bullet::MAX_BULLETS] = {};
+		asteroid::Asteroid asteroids[asteroid::MAX_ASTEROIDS] = {};
+		float spawnTimer = 0.0f;
 
 		ui::Button pauseButton = {};
 		ui::Button resumeButton = {};
@@ -43,6 +51,22 @@ namespace ReyesCuadra::gameplay
 			return clickedToFire || IsKeyPressed(KEY_SPACE);
 		}
 
+		// Cada SPAWN_INTERVAL segundos aparece un asteroide grande
+		void UpdateAsteroidSpawn()
+		{
+			spawnTimer += GetFrameTime();
+
+			if (spawnTimer >= SPAWN_INTERVAL)
+			{
+				spawnTimer = 0.0f;
+
+				if (asteroid::CountActive(asteroids) < MAX_ACTIVE_FOR_SPAWN)
+				{
+					asteroid::SpawnFromEdge(asteroids);
+				}
+			}
+		}
+
 		// Aca va la logica de la partida (nave, asteroides, balas)
 		void UpdateMatch()
 		{
@@ -54,11 +78,15 @@ namespace ReyesCuadra::gameplay
 			}
 
 			bullet::UpdateAll(bullets);
+
+			UpdateAsteroidSpawn();
+			asteroid::UpdateAll(asteroids);
 		}
 
 		// Aca se dibuja la partida
 		void DrawMatch()
 		{
+			asteroid::DrawAll(asteroids);
 			bullet::DrawAll(bullets);
 			ship::Draw(playerShip);
 		}
@@ -80,6 +108,14 @@ namespace ReyesCuadra::gameplay
 		isPaused = false;
 		playerShip = ship::Create();
 		bullet::InitAll(bullets);
+
+		asteroid::InitAll(asteroids);
+		spawnTimer = 0.0f;
+
+		for (int i = 0; i < INITIAL_ASTEROIDS; i++)
+		{
+			asteroid::SpawnFromEdge(asteroids);
+		}
 
 		const float pauseButtonX = static_cast<float>(config::SCREEN_WIDTH) - PAUSE_BUTTON_WIDTH - PAUSE_BUTTON_MARGIN;
 		pauseButton = ui::CreateButton(pauseButtonX, PAUSE_BUTTON_MARGIN, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, "PAUSA");
