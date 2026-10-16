@@ -44,12 +44,14 @@ namespace ReyesCuadra::credits
 
 		ui::DrawCenteredText(TextFormat("Programacion: %s", config::AUTHOR_NAME),
 			FIRST_LINE_POSITION_Y, TEXT_FONT_SIZE, LIGHTGRAY);
-		ui::DrawCenteredText("Hecho con raylib",
+		ui::DrawCenteredText("Sprites: generados con IA (Claude, de Anthropic)",
 			FIRST_LINE_POSITION_Y + LINE_SPACING, TEXT_FONT_SIZE, LIGHTGRAY);
-		ui::DrawCenteredText("Basado en Asteroids (Atari, 1979)",
+		ui::DrawCenteredText("Hecho con raylib",
 			FIRST_LINE_POSITION_Y + LINE_SPACING * 2, TEXT_FONT_SIZE, LIGHTGRAY);
-		ui::DrawCenteredText("Image Campus",
+		ui::DrawCenteredText("Basado en Asteroids (Atari, 1979)",
 			FIRST_LINE_POSITION_Y + LINE_SPACING * 3, TEXT_FONT_SIZE, LIGHTGRAY);
+		ui::DrawCenteredText("Image Campus",
+			FIRST_LINE_POSITION_Y + LINE_SPACING * 4, TEXT_FONT_SIZE, LIGHTGRAY);
 
 		ui::DrawButton(backButton);
 	}

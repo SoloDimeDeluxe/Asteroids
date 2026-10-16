@@ -25,6 +25,10 @@ namespace ReyesCuadra::asteroid
 		bool isActive;        // false = lugar libre en el arreglo
 	};
 
+	// Carga y libera las imagenes de los 3 tamaños
+	void LoadTextures();
+	void UnloadTextures();
+
 	// Deja todos los asteroides inactivos
 	void InitAll(Asteroid asteroids[]);
 

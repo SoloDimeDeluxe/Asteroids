@@ -5,7 +5,7 @@
 namespace ReyesCuadra::ship
 {
 	// Radio del circulo que se usa para chocar (aprox. el tamaño del triangulo)
-	constexpr float COLLISION_RADIUS = 14.0f;
+	constexpr float COLLISION_RADIUS = 16.0f;
 
 	struct Ship
 	{
@@ -15,6 +15,10 @@ namespace ReyesCuadra::ship
 		bool isAccelerating;  // Para dibujar el fuego del motor
 		float invulnerableTimeLeft; // Segundos que le quedan sin poder chocar
 	};
+
+	// Carga y libera las imagenes de la nave (despues de InitWindow / antes de CloseWindow)
+	void LoadTextures();
+	void UnloadTextures();
 
 	// Crea la nave quieta en el centro de la pantalla
 	Ship Create();

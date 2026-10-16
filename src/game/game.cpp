@@ -2,11 +2,15 @@
 
 #include "raylib.h"
 
+#include "entities/asteroid.h"
+#include "entities/bullet.h"
+#include "entities/ship.h"
 #include "game/screen.h"
 #include "screens/credits.h"
 #include "screens/gameplay.h"
 #include "screens/menu.h"
 #include "utils/config.h"
+#include "utils/ui.h"
 
 namespace ReyesCuadra::game
 {
@@ -43,6 +47,18 @@ namespace ReyesCuadra::game
 
 			// ESC no cierra la ventana: lo maneja cada pantalla
 			SetExitKey(KEY_NULL);
+
+			// Las rutas "res/..." se buscan desde la carpeta del .exe,
+			// asi funciona igual desde Visual Studio o abriendo el .exe suelto
+			ChangeDirectory(GetApplicationDirectory());
+
+			ship::LoadTextures();
+			asteroid::LoadTextures();
+			bullet::LoadTexture();
+			ui::LoadCursorTexture();
+
+			// Se usa la mira propia en vez del cursor del sistema
+			HideCursor();
 
 			ChangeScreen(Screen::Menu);
 		}
@@ -94,11 +110,19 @@ namespace ReyesCuadra::game
 				break;
 			}
 
+			// La mira va ultima para quedar encima de todo
+			ui::DrawCursor();
+
 			EndDrawing();
 		}
 
 		void Close()
 		{
+			ship::UnloadTextures();
+			asteroid::UnloadTextures();
+			bullet::UnloadTexture();
+			ui::UnloadCursorTexture();
+
 			CloseWindow();
 		}
 	}

@@ -71,6 +71,11 @@
       <!-- Evita el warning LNK4098 en Debug -->
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
+    <PostBuildEvent>
+      <!-- Copia la carpeta res al lado del .exe -->
+      <Command>xcopy "$(ProjectDir)res" "$(OutDir)res\" /E /I /Y /D</Command>
+      <Message>Copiando recursos (res) a la carpeta del ejecutable</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -96,6 +101,11 @@
       <AdditionalLibraryDirectories>$(ProjectDir)lib\raylib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>raylib.lib;winmm.lib;gdi32.lib;opengl32.lib;user32.lib;shell32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <!-- Copia la carpeta res al lado del .exe -->
+      <Command>xcopy "$(ProjectDir)res" "$(OutDir)res\" /E /I /Y /D</Command>
+      <Message>Copiando recursos (res) a la carpeta del ejecutable</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />

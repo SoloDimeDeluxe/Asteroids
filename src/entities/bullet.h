@@ -18,6 +18,10 @@ namespace ReyesCuadra::bullet
 		bool isActive;       // false = lugar libre en el arreglo
 	};
 
+	// Carga y libera la imagen de la bala
+	void LoadTexture();
+	void UnloadTexture();
+
 	// Deja todas las balas inactivas
 	void InitAll(Bullet bullets[]);
 
