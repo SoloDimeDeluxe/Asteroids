@@ -30,10 +30,32 @@ namespace ReyesCuadra::asteroid
 		// Los dos pedazos salen abriendose hacia los costados de la direccion original
 		constexpr float SPLIT_ANGLE = 35.0f * DEG2RAD;
 
-		constexpr int SIDES = 8;               // Lados del poligono
-		constexpr float LINE_THICKNESS = 2.0f;
+		// Sprites (uno por tamaño)
+		constexpr const char* LARGE_TEXTURE_PATH = "res/textures/asteroid_large.png";
+		constexpr const char* MEDIUM_TEXTURE_PATH = "res/textures/asteroid_medium.png";
+		constexpr const char* SMALL_TEXTURE_PATH = "res/textures/asteroid_small.png";
 
-		const Color ASTEROID_COLOR = LIGHTGRAY;
+		// La roca ocupa el 92% del ancho de la imagen (el resto es transparente)
+		constexpr float TEXTURE_FILL = 0.92f;
+
+		Texture2D largeTexture = {};
+		Texture2D mediumTexture = {};
+		Texture2D smallTexture = {};
+
+		const Texture2D& GetTexture(Size size)
+		{
+			switch (size)
+			{
+			case Size::Large:
+				return largeTexture;
+			case Size::Medium:
+				return mediumTexture;
+			case Size::Small:
+				return smallTexture;
+			}
+
+			return smallTexture;
+		}
 
 		// Numero al azar entre min y max (con decimales)
 		float RandomFloat(float min, float max)
@@ -73,6 +95,24 @@ namespace ReyesCuadra::asteroid
 
 			return SMALL_MIN_SPEED;
 		}
+	}
+
+	void LoadTextures()
+	{
+		largeTexture = LoadTexture(LARGE_TEXTURE_PATH);
+		mediumTexture = LoadTexture(MEDIUM_TEXTURE_PATH);
+		smallTexture = LoadTexture(SMALL_TEXTURE_PATH);
+
+		SetTextureFilter(largeTexture, TEXTURE_FILTER_BILINEAR);
+		SetTextureFilter(mediumTexture, TEXTURE_FILTER_BILINEAR);
+		SetTextureFilter(smallTexture, TEXTURE_FILTER_BILINEAR);
+	}
+
+	void UnloadTextures()
+	{
+		UnloadTexture(largeTexture);
+		UnloadTexture(mediumTexture);
+		UnloadTexture(smallTexture);
 	}
 
 	void InitAll(Asteroid asteroids[])
@@ -206,11 +246,22 @@ namespace ReyesCuadra::asteroid
 	{
 		for (int i = 0; i < MAX_ASTEROIDS; i++)
 		{
-			if (asteroids[i].isActive)
+			if (!asteroids[i].isActive)
 			{
-				DrawPolyLinesEx(asteroids[i].position, SIDES, asteroids[i].radius,
-					asteroids[i].rotation, LINE_THICKNESS, ASTEROID_COLOR);
+				continue;
 			}
+
+			const Texture2D& texture = GetTexture(asteroids[i].size);
+
+			// Tamaño en pantalla para que la roca coincida con el radio de colision
+			const float drawSize = asteroids[i].radius * 2.0f / TEXTURE_FILL;
+
+			const Rectangle source = { 0.0f, 0.0f, static_cast<float>(texture.width), static_cast<float>(texture.height) };
+			const Rectangle destination = { asteroids[i].position.x, asteroids[i].position.y, drawSize, drawSize };
+			const Vector2 origin = { drawSize / 2.0f, drawSize / 2.0f }; // Gira sobre su centro
+
+			// La rotacion del asteroide ya esta en grados
+			DrawTexturePro(texture, source, destination, origin, asteroids[i].rotation, WHITE);
 		}
 	}
 }

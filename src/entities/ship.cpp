@@ -9,13 +9,19 @@ namespace ReyesCuadra::ship
 {
 	namespace
 	{
-		// Forma
-		constexpr float NOSE_LENGTH = 20.0f;   // Del centro a la punta
-		constexpr float TAIL_LENGTH = 14.0f;   // Del centro a la cola
-		constexpr float HALF_WIDTH = 12.0f;    // Mitad del ancho de la cola
-		constexpr float FLAME_LENGTH = 28.0f;  // Del centro a la punta del fuego
-		constexpr float FLAME_HALF_WIDTH = 6.0f;
-		constexpr float WRAP_MARGIN = FLAME_LENGTH; // Lo mas lejos que se dibuja algo desde el centro
+		// Sprites
+		constexpr const char* SHIP_TEXTURE_PATH = "res/textures/ship.png";
+		constexpr const char* FLAME_TEXTURE_PATH = "res/textures/ship_flame.png";
+
+		// Tamaños en pantalla (la imagen se escala a esto)
+		constexpr float SHIP_DRAW_SIZE = 48.0f;    // Ancho y alto del sprite
+		constexpr float FLAME_DRAW_WIDTH = 24.0f;
+		constexpr float FLAME_DRAW_HEIGHT = 12.0f;
+
+		// Medidas desde el centro de la nave (segun el dibujo del sprite)
+		constexpr float NOSE_LENGTH = 22.0f;       // Del centro a la punta (de ahi salen las balas)
+		constexpr float TAIL_LENGTH = 17.0f;       // Del centro al motor (ahi empieza el fuego)
+		constexpr float WRAP_MARGIN = TAIL_LENGTH + FLAME_DRAW_WIDTH; // Lo mas lejos que se dibuja algo
 
 		// Movimiento
 		constexpr float ACCELERATION = 300.0f; // Pixeles por segundo, cada segundo
@@ -25,8 +31,19 @@ namespace ReyesCuadra::ship
 		constexpr float RESPAWN_INVULNERABLE_TIME = 3.0f; // Segundos
 		constexpr float BLINK_INTERVAL = 0.15f;           // Segundos entre parpadeos
 
-		const Color SHIP_COLOR = RAYWHITE;
-		const Color FLAME_COLOR = ORANGE;
+		Texture2D shipTexture = {};
+		Texture2D flameTexture = {};
+
+		// Dibuja una textura entera, rotada alrededor de "origin" y con ese punto ubicado en "position"
+		void DrawRotatedTexture(const Texture2D& texture, Vector2 position, float width, float height,
+			Vector2 origin, float rotationRadians)
+		{
+			const Rectangle source = { 0.0f, 0.0f, static_cast<float>(texture.width), static_cast<float>(texture.height) };
+			const Rectangle destination = { position.x, position.y, width, height };
+
+			// DrawTexturePro usa grados, nuestra rotacion esta en radianes
+			DrawTexturePro(texture, source, destination, origin, rotationRadians * RAD2DEG, WHITE);
+		}
 
 		// Rota un punto relativo a la nave y lo pasa a coordenadas de pantalla
 		Vector2 ToScreen(const Ship& ship, float localX, float localY)
@@ -71,6 +88,22 @@ namespace ReyesCuadra::ship
 				ship.velocity.y = ship.velocity.y / speed * MAX_SPEED;
 			}
 		}
+	}
+
+	void LoadTextures()
+	{
+		shipTexture = LoadTexture(SHIP_TEXTURE_PATH);
+		flameTexture = LoadTexture(FLAME_TEXTURE_PATH);
+
+		// Filtro suave para que no se vea pixelado al escalar y rotar
+		SetTextureFilter(shipTexture, TEXTURE_FILTER_BILINEAR);
+		SetTextureFilter(flameTexture, TEXTURE_FILTER_BILINEAR);
+	}
+
+	void UnloadTextures()
+	{
+		UnloadTexture(shipTexture);
+		UnloadTexture(flameTexture);
 	}
 
 	Ship Create()
@@ -145,21 +178,17 @@ namespace ReyesCuadra::ship
 			}
 		}
 
-		// Triangulo: punta adelante, dos esquinas atras
-		const Vector2 nose = GetNosePosition(ship);
-		const Vector2 leftCorner = ToScreen(ship, -TAIL_LENGTH, -HALF_WIDTH);
-		const Vector2 rightCorner = ToScreen(ship, -TAIL_LENGTH, HALF_WIDTH);
-
-		DrawTriangleLines(nose, leftCorner, rightCorner, SHIP_COLOR);
-
-		// Fuego del motor, solo mientras acelera
+		// Fuego del motor (atras de la nave), solo mientras acelera.
+		// Su pivote queda a la derecha de la imagen, en el centro de la nave,
+		// asi gira junto con ella y siempre queda pegado al motor.
 		if (ship.isAccelerating)
 		{
-			const Vector2 flameTip = ToScreen(ship, -FLAME_LENGTH, 0.0f);
-			const Vector2 flameLeft = ToScreen(ship, -TAIL_LENGTH, -FLAME_HALF_WIDTH);
-			const Vector2 flameRight = ToScreen(ship, -TAIL_LENGTH, FLAME_HALF_WIDTH);
-
-			DrawTriangleLines(flameTip, flameLeft, flameRight, FLAME_COLOR);
+			const Vector2 flameOrigin = { TAIL_LENGTH + FLAME_DRAW_WIDTH, FLAME_DRAW_HEIGHT / 2.0f };
+			DrawRotatedTexture(flameTexture, ship.position, FLAME_DRAW_WIDTH, FLAME_DRAW_HEIGHT, flameOrigin, ship.rotation);
 		}
+
+		// Nave: pivote en el centro del sprite (como el ejemplo de DrawRectanglePro)
+		const Vector2 shipOrigin = { SHIP_DRAW_SIZE / 2.0f, SHIP_DRAW_SIZE / 2.0f };
+		DrawRotatedTexture(shipTexture, ship.position, SHIP_DRAW_SIZE, SHIP_DRAW_SIZE, shipOrigin, ship.rotation);
 	}
 }

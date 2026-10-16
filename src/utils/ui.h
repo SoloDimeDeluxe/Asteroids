@@ -21,6 +21,11 @@ namespace ReyesCuadra::ui
 	bool IsButtonClicked(const Button& button);
 	void DrawButton(const Button& button);
 
+	// Mira que reemplaza al cursor del sistema
+	void LoadCursorTexture();
+	void UnloadCursorTexture();
+	void DrawCursor();
+
 	// Texto centrado en X
 	void DrawCenteredText(const char* text, int positionY, int fontSize, Color color);
 }

@@ -11,7 +11,22 @@ namespace ReyesCuadra::bullet
 		constexpr float SPEED = 600.0f;    // Pixeles por segundo
 		constexpr float LIFE_TIME = 1.0f;  // Segundos
 
-		const Color BULLET_COLOR = RAYWHITE;
+		constexpr const char* TEXTURE_PATH = "res/textures/bullet.png";
+		constexpr float DRAW_SIZE = 12.0f; // Mas grande que el radio: incluye el brillo
+
+		Texture2D bulletTexture = {};
+	}
+
+	void LoadTexture()
+	{
+		// "::" para usar la funcion de raylib y no esta misma
+		bulletTexture = ::LoadTexture(TEXTURE_PATH);
+		SetTextureFilter(bulletTexture, TEXTURE_FILTER_BILINEAR);
+	}
+
+	void UnloadTexture()
+	{
+		::UnloadTexture(bulletTexture);
 	}
 
 	void InitAll(Bullet bullets[])
@@ -79,7 +94,12 @@ namespace ReyesCuadra::bullet
 		{
 			if (bullets[i].isActive)
 			{
-				DrawCircleV(bullets[i].position, RADIUS, BULLET_COLOR);
+				// Centrada en la posicion de la bala
+				const Vector2 topLeft = { bullets[i].position.x - DRAW_SIZE / 2.0f, bullets[i].position.y - DRAW_SIZE / 2.0f };
+				const Rectangle source = { 0.0f, 0.0f, static_cast<float>(bulletTexture.width), static_cast<float>(bulletTexture.height) };
+				const Rectangle destination = { topLeft.x, topLeft.y, DRAW_SIZE, DRAW_SIZE };
+
+				DrawTexturePro(bulletTexture, source, destination, { 0.0f, 0.0f }, 0.0f, WHITE);
 			}
 		}
 	}
