@@ -10,10 +10,18 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 TEXTURES = Path(sys.argv[1])
 OUTPUT = Path(sys.argv[2])
 WIDTH, HEIGHT = 630, 500
-TITLE_FONT = "/usr/share/fonts/opentype/noto/NotoSansCJK-Black.ttc"
-SUBTITLE_FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+# First font found is used (Linux paths first, then Windows)
+TITLE_FONTS = ["/usr/share/fonts/opentype/noto/NotoSansCJK-Black.ttc", "C:/Windows/Fonts/ariblk.ttf"]
+SUBTITLE_FONTS = ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "C:/Windows/Fonts/arial.ttf"]
 
 rng = random.Random(42)
+
+
+def get_font(candidates, size):
+    for path in candidates:
+        if Path(path).exists():
+            return ImageFont.truetype(path, size)
+    return ImageFont.load_default(size)
 
 
 def load(name):
@@ -82,7 +90,7 @@ for distance in (95, 150, 205):
 # ---------------------------------------------------------------- title
 title_layer = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
 td = ImageDraw.Draw(title_layer)
-font = ImageFont.truetype(TITLE_FONT, 92)
+font = get_font(TITLE_FONTS, 92)
 text = "ASTEROIDS"
 box = td.textbbox((0, 0), text, font=font)
 tx = (WIDTH - (box[2] - box[0])) / 2 - box[0]
@@ -96,7 +104,7 @@ canvas.alpha_composite(glow.filter(ImageFilter.GaussianBlur(12)))
 td.text((tx, ty), text, font=font, fill=(245, 248, 255, 255), stroke_width=3, stroke_fill=(20, 60, 120, 255))
 canvas.alpha_composite(title_layer)
 
-subtitle_font = ImageFont.truetype(SUBTITLE_FONT, 18)
+subtitle_font = get_font(SUBTITLE_FONTS, 18)
 subtitle = "Valentin Reyes Cuadra"
 sd = ImageDraw.Draw(canvas)
 sbox = sd.textbbox((0, 0), subtitle, font=subtitle_font)
