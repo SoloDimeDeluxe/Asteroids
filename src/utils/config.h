@@ -10,6 +10,6 @@ namespace ReyesCuadra::config
 
 	// Info del juego
 	constexpr const char* GAME_TITLE = "Asteroids";
-	constexpr const char* GAME_VERSION = "v0.32";
-	constexpr const char* AUTHOR_NAME = "Valentin Reyes";
+	constexpr const char* GAME_VERSION = "v1.0";
+	constexpr const char* AUTHOR_NAME = "Valentin Luciano Reyes Cuadra";
 }
