@@ -39,13 +39,25 @@ namespace ReyesCuadra::gameplay
 	static constexpr int HUD_MARGIN = 15;
 	static constexpr int HUD_LINE_SPACING = 30;
 
+	// Ayuda de controles al empezar la partida
+	static constexpr float CONTROLS_HINT_DURATION = 6.0f;  // Segundos que se muestra
+	static constexpr float CONTROLS_HINT_FADE_TIME = 1.0f; // Ultimo segundo: se desvanece
+	static constexpr int CONTROLS_HINT_FONT_SIZE = 20;
+	static constexpr int CONTROLS_HINT_BOTTOM_MARGIN = 40;
+
+	// Segundos que se ve la nave destruida antes de mostrar el GAME OVER
+	static constexpr float GAME_OVER_DELAY = 2.0f;
+
 	// Aparicion de asteroides
 	static constexpr int INITIAL_ASTEROIDS = 4;
 	static constexpr float SPAWN_INTERVAL = 5.0f;      // Segundos entre cada asteroide nuevo
 	static constexpr int MAX_ACTIVE_FOR_SPAWN = 8;     // No aparecen mas si ya hay estos
 
 	static bool isPaused = false;
-	static bool isGameOver = false;
+	static bool isShipDestroyed = false;               // Perdio la ultima vida
+	static bool isGameOver = false;                    // Se esta mostrando la pantalla de derrota
+	static float gameOverDelayLeft = 0.0f;
+	static float controlsHintTimeLeft = 0.0f;
 	static int lives = INITIAL_LIVES;
 	static int score = 0;                              // Asteroides destruidos con balas
 
@@ -153,8 +165,9 @@ namespace ReyesCuadra::gameplay
 				}
 				else
 				{
-					isGameOver = true;
-					audio::PlaySoundEffect(audio::SoundEffect::GameOver);
+					// No muestra el GAME OVER de golpe: primero deja ver el choque
+					isShipDestroyed = true;
+					gameOverDelayLeft = GAME_OVER_DELAY;
 				}
 
 				// Un solo choque por frame
@@ -167,7 +180,7 @@ namespace ReyesCuadra::gameplay
 	static void UpdateMatch()
 	{
 		// Sin vidas la nave ya no se mueve ni dispara, pero los asteroides siguen de fondo
-		if (!isGameOver)
+		if (!isShipDestroyed)
 		{
 			ship::Update(playerShip);
 
@@ -182,7 +195,7 @@ namespace ReyesCuadra::gameplay
 		}
 
 		// El motor suena solo mientras la nave (viva) acelera
-		audio::UpdateThrust(!isGameOver && playerShip.isAccelerating);
+		audio::UpdateThrust(!isShipDestroyed && playerShip.isAccelerating);
 
 		bullet::UpdateAll(bullets);
 
@@ -191,9 +204,28 @@ namespace ReyesCuadra::gameplay
 
 		CheckBulletAsteroidCollisions();
 
-		if (!isGameOver)
+		if (!isShipDestroyed)
 		{
 			CheckShipAsteroidCollisions();
+		}
+
+		if (controlsHintTimeLeft > 0.0f)
+		{
+			controlsHintTimeLeft -= GetFrameTime();
+		}
+	}
+
+	// Despues del ultimo choque: espera unos segundos y muestra el GAME OVER
+	static void UpdateShipDestroyed()
+	{
+		UpdateMatch();
+
+		gameOverDelayLeft -= GetFrameTime();
+
+		if (gameOverDelayLeft <= 0.0f)
+		{
+			isGameOver = true;
+			audio::PlaySoundEffect(audio::SoundEffect::GameOver);
 		}
 	}
 
@@ -203,18 +235,45 @@ namespace ReyesCuadra::gameplay
 		DrawText(TextFormat("PUNTAJE: %d", score), HUD_MARGIN, HUD_MARGIN + HUD_LINE_SPACING, HUD_FONT_SIZE, RAYWHITE);
 	}
 
+	// Controles abajo de la pantalla durante los primeros segundos
+	static void DrawControlsHint()
+	{
+		if (controlsHintTimeLeft <= 0.0f)
+		{
+			return;
+		}
+
+		// Opaco hasta el ultimo segundo, ahi se va desvaneciendo
+		float opacity = controlsHintTimeLeft / CONTROLS_HINT_FADE_TIME;
+
+		if (opacity > 1.0f)
+		{
+			opacity = 1.0f;
+		}
+
+		const int positionY = config::SCREEN_HEIGHT - CONTROLS_HINT_BOTTOM_MARGIN;
+
+		ui::DrawCenteredText("Mouse: apuntar  -  Clic derecho: acelerar  -  Clic izquierdo: disparar",
+			positionY, CONTROLS_HINT_FONT_SIZE, Fade(LIGHTGRAY, opacity));
+	}
+
 	// Aca se dibuja la partida
 	static void DrawMatch()
 	{
 		asteroid::DrawAll(asteroids);
 		bullet::DrawAll(bullets);
 
-		if (!isGameOver)
+		if (isShipDestroyed)
+		{
+			ship::DrawDestroyed(playerShip);
+		}
+		else
 		{
 			ship::Draw(playerShip);
 		}
 
 		DrawHud();
+		DrawControlsHint();
 	}
 
 	// Capa oscura sobre la partida (para pausa y derrota)
@@ -284,11 +343,16 @@ namespace ReyesCuadra::gameplay
 	void Init()
 	{
 		isPaused = false;
+		isShipDestroyed = false;
 		isGameOver = false;
+		gameOverDelayLeft = 0.0f;
+		controlsHintTimeLeft = CONTROLS_HINT_DURATION;
 		lives = INITIAL_LIVES;
 		score = 0;
 
-		playerShip = ship::Create();
+		// Arranca en el centro e invulnerable (parpadeando) unos segundos,
+		// para que el jugador se acostumbre a los controles
+		ship::Respawn(playerShip);
 		bullet::InitAll(bullets);
 
 		asteroid::InitAll(asteroids);
@@ -316,6 +380,13 @@ namespace ReyesCuadra::gameplay
 		if (isGameOver)
 		{
 			return UpdateGameOver();
+		}
+
+		// Mientras se ve la nave destruida no se puede pausar
+		if (isShipDestroyed)
+		{
+			UpdateShipDestroyed();
+			return game::Screen::Gameplay;
 		}
 
 		// P o ESC tambien pausan/reanudan (opcional, por teclado)
@@ -354,7 +425,7 @@ namespace ReyesCuadra::gameplay
 		{
 			DrawPauseOverlay();
 		}
-		else
+		else if (!isShipDestroyed)
 		{
 			ui::DrawButton(pauseButton);
 		}

@@ -29,18 +29,21 @@ namespace ReyesCuadra::ship
 	static constexpr float RESPAWN_INVULNERABLE_TIME = 3.0f; // Segundos
 	static constexpr float BLINK_INTERVAL = 0.15f;           // Segundos entre parpadeos
 
+	static const Color DESTROYED_COLOR = RED;
+
 	static Texture2D shipTexture = {};
 	static Texture2D flameTexture = {};
 
-	// Dibuja una textura entera, rotada alrededor de "origin" y con ese punto ubicado en "position"
+	// Dibuja una textura entera, rotada alrededor de "origin" y con ese punto ubicado en "position".
+	// "tint" tiñe la imagen (WHITE = colores originales)
 	static void DrawRotatedTexture(const Texture2D& texture, Vector2 position, float width, float height,
-		Vector2 origin, float rotationRadians)
+		Vector2 origin, float rotationRadians, Color tint)
 	{
 		const Rectangle source = { 0.0f, 0.0f, static_cast<float>(texture.width), static_cast<float>(texture.height) };
 		const Rectangle destination = { position.x, position.y, width, height };
 
 		// DrawTexturePro usa grados, nuestra rotacion esta en radianes
-		DrawTexturePro(texture, source, destination, origin, rotationRadians * RAD2DEG, WHITE);
+		DrawTexturePro(texture, source, destination, origin, rotationRadians * RAD2DEG, tint);
 	}
 
 	// Rota un punto relativo a la nave y lo pasa a coordenadas de pantalla
@@ -159,12 +162,19 @@ namespace ReyesCuadra::ship
 		if (ship.isAccelerating)
 		{
 			const Vector2 flameOrigin = { TAIL_LENGTH + FLAME_DRAW_WIDTH, FLAME_DRAW_HEIGHT / 2.0f };
-			DrawRotatedTexture(flameTexture, ship.position, FLAME_DRAW_WIDTH, FLAME_DRAW_HEIGHT, flameOrigin, ship.rotation);
+			DrawRotatedTexture(flameTexture, ship.position, FLAME_DRAW_WIDTH, FLAME_DRAW_HEIGHT, flameOrigin, ship.rotation, WHITE);
 		}
 
 		// Nave: pivote en el centro del sprite (como el ejemplo de DrawRectanglePro)
 		const Vector2 shipOrigin = { SHIP_DRAW_SIZE / 2.0f, SHIP_DRAW_SIZE / 2.0f };
-		DrawRotatedTexture(shipTexture, ship.position, SHIP_DRAW_SIZE, SHIP_DRAW_SIZE, shipOrigin, ship.rotation);
+		DrawRotatedTexture(shipTexture, ship.position, SHIP_DRAW_SIZE, SHIP_DRAW_SIZE, shipOrigin, ship.rotation, WHITE);
+	}
+
+	void DrawDestroyed(const Ship& ship)
+	{
+		// Sin fuego ni parpadeo, solo la nave teñida de rojo
+		const Vector2 shipOrigin = { SHIP_DRAW_SIZE / 2.0f, SHIP_DRAW_SIZE / 2.0f };
+		DrawRotatedTexture(shipTexture, ship.position, SHIP_DRAW_SIZE, SHIP_DRAW_SIZE, shipOrigin, ship.rotation, DESTROYED_COLOR);
 	}
 
 	Vector2 GetNosePosition(const Ship& ship)

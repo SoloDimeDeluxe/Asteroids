@@ -25,6 +25,9 @@ namespace ReyesCuadra::ship
 	void Update(Ship& ship);
 	void Draw(const Ship& ship);
 
+	// Dibuja la nave en rojo y quieta (cuando la destruye un asteroide)
+	void DrawDestroyed(const Ship& ship);
+
 	// Punta de la nave (de donde salen las balas)
 	Vector2 GetNosePosition(const Ship& ship);
 
