@@ -7,23 +7,20 @@
 
 namespace ReyesCuadra::menu
 {
-	namespace
-	{
-		constexpr int TITLE_FONT_SIZE = 80;
-		constexpr int TITLE_POSITION_Y = 150;
+	static constexpr int TITLE_FONT_SIZE = 80;
+	static constexpr int TITLE_POSITION_Y = 150;
 
-		constexpr float BUTTON_WIDTH = 260.0f;
-		constexpr float BUTTON_HEIGHT = 60.0f;
-		constexpr float FIRST_BUTTON_POSITION_Y = 340.0f;
-		constexpr float BUTTON_SPACING = 90.0f;
+	static constexpr float BUTTON_WIDTH = 260.0f;
+	static constexpr float BUTTON_HEIGHT = 60.0f;
+	static constexpr float FIRST_BUTTON_POSITION_Y = 340.0f;
+	static constexpr float BUTTON_SPACING = 90.0f;
 
-		constexpr int VERSION_FONT_SIZE = 20;
-		constexpr int VERSION_MARGIN = 10;
+	static constexpr int VERSION_FONT_SIZE = 20;
+	static constexpr int VERSION_MARGIN = 10;
 
-		ui::Button playButton = {};
-		ui::Button creditsButton = {};
-		ui::Button exitButton = {};
-	}
+	static ui::Button playButton = {};
+	static ui::Button creditsButton = {};
+	static ui::Button exitButton = {};
 
 	void Init()
 	{

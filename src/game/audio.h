@@ -20,9 +20,6 @@ namespace ReyesCuadra::audio
 	// Inicia el dispositivo de audio y carga sonidos y musicas (despues de InitWindow)
 	void Init();
 
-	// Libera todo y cierra el dispositivo de audio (antes de CloseWindow)
-	void Close();
-
 	void PlaySoundEffect(SoundEffect soundEffect);
 
 	// Cambia la musica de fondo (si ya esta sonando esa, no la reinicia)
@@ -33,4 +30,7 @@ namespace ReyesCuadra::audio
 
 	// Sonido del motor: suena en loop mientras isAccelerating sea true
 	void UpdateThrust(bool isAccelerating);
+
+	// Libera todo y cierra el dispositivo de audio (antes de CloseWindow)
+	void Close();
 }

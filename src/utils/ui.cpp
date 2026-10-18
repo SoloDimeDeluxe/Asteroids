@@ -5,19 +5,16 @@
 
 namespace ReyesCuadra::ui
 {
-	namespace
-	{
-		constexpr int BUTTON_FONT_SIZE = 30;
-		constexpr float BUTTON_BORDER_THICKNESS = 2.0f;
+	static constexpr int BUTTON_FONT_SIZE = 30;
+	static constexpr float BUTTON_BORDER_THICKNESS = 2.0f;
 
-		constexpr const char* CURSOR_TEXTURE_PATH = "res/textures/cursor.png";
-		constexpr float CURSOR_DRAW_SIZE = 32.0f;
+	static constexpr const char* CURSOR_TEXTURE_PATH = "res/textures/cursor.png";
+	static constexpr float CURSOR_DRAW_SIZE = 32.0f;
 
-		Texture2D cursorTexture = {};
+	static Texture2D cursorTexture = {};
 
-		const Color BUTTON_COLOR = RAYWHITE;
-		const Color BUTTON_HOVER_COLOR = SKYBLUE;
-	}
+	static const Color BUTTON_COLOR = RAYWHITE;
+	static const Color BUTTON_HOVER_COLOR = SKYBLUE;
 
 	Button CreateButton(float positionX, float positionY, float width, float height, const char* text)
 	{
@@ -86,11 +83,6 @@ namespace ReyesCuadra::ui
 		SetTextureFilter(cursorTexture, TEXTURE_FILTER_BILINEAR);
 	}
 
-	void UnloadCursorTexture()
-	{
-		UnloadTexture(cursorTexture);
-	}
-
 	void DrawCursor()
 	{
 		// Centro de la mira justo en la punta del mouse
@@ -100,5 +92,10 @@ namespace ReyesCuadra::ui
 		const Vector2 origin = { CURSOR_DRAW_SIZE / 2.0f, CURSOR_DRAW_SIZE / 2.0f };
 
 		DrawTexturePro(cursorTexture, source, destination, origin, 0.0f, WHITE);
+	}
+
+	void UnloadCursorTexture()
+	{
+		UnloadTexture(cursorTexture);
 	}
 }

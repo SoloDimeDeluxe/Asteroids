@@ -25,15 +25,11 @@ namespace ReyesCuadra::asteroid
 		bool isActive;        // false = lugar libre en el arreglo
 	};
 
-	// Carga y libera las imagenes de los 3 tamaños
+	// Carga las imagenes de los 3 tamaños (despues de InitWindow)
 	void LoadTextures();
-	void UnloadTextures();
 
 	// Deja todos los asteroides inactivos
 	void InitAll(Asteroid asteroids[]);
-
-	// Activa un asteroide libre con esos datos (si hay alguno libre)
-	void Spawn(Asteroid asteroids[], Vector2 position, float direction, Size size);
 
 	// Crea un asteroide grande desde afuera de un borde, yendo hacia la pantalla
 	void SpawnFromEdge(Asteroid asteroids[]);
@@ -46,4 +42,7 @@ namespace ReyesCuadra::asteroid
 
 	void UpdateAll(Asteroid asteroids[]);
 	void DrawAll(const Asteroid asteroids[]);
+
+	// Libera las imagenes (antes de CloseWindow)
+	void UnloadTextures();
 }

@@ -6,27 +6,19 @@
 
 namespace ReyesCuadra::bullet
 {
-	namespace
-	{
-		constexpr float SPEED = 600.0f;    // Pixeles por segundo
-		constexpr float LIFE_TIME = 1.0f;  // Segundos
+	static constexpr float SPEED = 600.0f;    // Pixeles por segundo
+	static constexpr float LIFE_TIME = 1.0f;  // Segundos
 
-		constexpr const char* TEXTURE_PATH = "res/textures/bullet.png";
-		constexpr float DRAW_SIZE = 12.0f; // Mas grande que el radio: incluye el brillo
+	static constexpr const char* TEXTURE_PATH = "res/textures/bullet.png";
+	static constexpr float DRAW_SIZE = 12.0f; // Mas grande que el radio: incluye el brillo
 
-		Texture2D bulletTexture = {};
-	}
+	static Texture2D bulletTexture = {};
 
 	void LoadTexture()
 	{
 		// "::" para usar la funcion de raylib y no esta misma
 		bulletTexture = ::LoadTexture(TEXTURE_PATH);
 		SetTextureFilter(bulletTexture, TEXTURE_FILTER_BILINEAR);
-	}
-
-	void UnloadTexture()
-	{
-		::UnloadTexture(bulletTexture);
 	}
 
 	void InitAll(Bullet bullets[])
@@ -103,5 +95,10 @@ namespace ReyesCuadra::bullet
 				DrawTexturePro(bulletTexture, source, destination, { 0.0f, 0.0f }, 0.0f, WHITE);
 			}
 		}
+	}
+
+	void UnloadTexture()
+	{
+		::UnloadTexture(bulletTexture);
 	}
 }

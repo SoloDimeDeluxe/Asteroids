@@ -16,9 +16,8 @@ namespace ReyesCuadra::ship
 		float invulnerableTimeLeft; // Segundos que le quedan sin poder chocar
 	};
 
-	// Carga y libera las imagenes de la nave (despues de InitWindow / antes de CloseWindow)
+	// Carga las imagenes de la nave (despues de InitWindow)
 	void LoadTextures();
-	void UnloadTextures();
 
 	// Crea la nave quieta en el centro de la pantalla
 	Ship Create();
@@ -33,4 +32,7 @@ namespace ReyesCuadra::ship
 	void Respawn(Ship& ship);
 
 	bool IsInvulnerable(const Ship& ship);
+
+	// Libera las imagenes de la nave (antes de CloseWindow)
+	void UnloadTextures();
 }

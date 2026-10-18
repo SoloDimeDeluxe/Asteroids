@@ -7,21 +7,18 @@
 
 namespace ReyesCuadra::credits
 {
-	namespace
-	{
-		constexpr int TITLE_FONT_SIZE = 60;
-		constexpr int TITLE_POSITION_Y = 120;
+	static constexpr int TITLE_FONT_SIZE = 60;
+	static constexpr int TITLE_POSITION_Y = 120;
 
-		constexpr int TEXT_FONT_SIZE = 25;
-		constexpr int FIRST_LINE_POSITION_Y = 260;
-		constexpr int LINE_SPACING = 50;
+	static constexpr int TEXT_FONT_SIZE = 25;
+	static constexpr int FIRST_LINE_POSITION_Y = 260;
+	static constexpr int LINE_SPACING = 50;
 
-		constexpr float BACK_BUTTON_WIDTH = 220.0f;
-		constexpr float BACK_BUTTON_HEIGHT = 60.0f;
-		constexpr float BACK_BUTTON_POSITION_Y = 600.0f;
+	static constexpr float BACK_BUTTON_WIDTH = 220.0f;
+	static constexpr float BACK_BUTTON_HEIGHT = 60.0f;
+	static constexpr float BACK_BUTTON_POSITION_Y = 600.0f;
 
-		ui::Button backButton = {};
-	}
+	static ui::Button backButton = {};
 
 	void Init()
 	{

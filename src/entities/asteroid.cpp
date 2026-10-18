@@ -7,124 +7,107 @@
 
 namespace ReyesCuadra::asteroid
 {
-	namespace
+	// Radio de cada tamaño
+	static constexpr float LARGE_RADIUS = 45.0f;
+	static constexpr float MEDIUM_RADIUS = 25.0f;
+	static constexpr float SMALL_RADIUS = 12.0f;
+
+	// Velocidad minima y maxima de cada tamaño (los chicos son mas rapidos)
+	static constexpr float LARGE_MIN_SPEED = 50.0f;
+	static constexpr float LARGE_MAX_SPEED = 90.0f;
+	static constexpr float MEDIUM_MIN_SPEED = 90.0f;
+	static constexpr float MEDIUM_MAX_SPEED = 140.0f;
+	static constexpr float SMALL_MIN_SPEED = 140.0f;
+	static constexpr float SMALL_MAX_SPEED = 200.0f;
+
+	static constexpr float MAX_ROTATION_SPEED = 60.0f; // Grados por segundo
+	static constexpr float FULL_TURN_DEGREES = 360.0f; // Una vuelta completa
+
+	// Bordes de la pantalla (para elegir por donde aparece un asteroide)
+	enum class ScreenEdge
 	{
-		// Radio de cada tamaño
-		constexpr float LARGE_RADIUS = 45.0f;
-		constexpr float MEDIUM_RADIUS = 25.0f;
-		constexpr float SMALL_RADIUS = 12.0f;
+		Top,
+		Right,
+		Bottom,
+		Left
+	};
 
-		// Velocidad minima y maxima de cada tamaño (los chicos son mas rapidos)
-		constexpr float LARGE_MIN_SPEED = 50.0f;
-		constexpr float LARGE_MAX_SPEED = 90.0f;
-		constexpr float MEDIUM_MIN_SPEED = 90.0f;
-		constexpr float MEDIUM_MAX_SPEED = 140.0f;
-		constexpr float SMALL_MIN_SPEED = 140.0f;
-		constexpr float SMALL_MAX_SPEED = 200.0f;
+	static constexpr int SCREEN_EDGE_COUNT = 4;
 
-		constexpr float MAX_ROTATION_SPEED = 60.0f; // Grados por segundo
+	// Zona central a la que apuntan al aparecer (para que entren a la pantalla)
+	static constexpr float TARGET_AREA_MARGIN = 200.0f;
 
-		// Zona central a la que apuntan al aparecer (para que entren a la pantalla)
-		constexpr float TARGET_AREA_MARGIN = 200.0f;
+	// Los dos pedazos salen abriendose hacia los costados de la direccion original
+	static constexpr float SPLIT_ANGLE = 35.0f * DEG2RAD;
 
-		// Los dos pedazos salen abriendose hacia los costados de la direccion original
-		constexpr float SPLIT_ANGLE = 35.0f * DEG2RAD;
+	// Sprites (uno por tamaño)
+	static constexpr const char* LARGE_TEXTURE_PATH = "res/textures/asteroid_large.png";
+	static constexpr const char* MEDIUM_TEXTURE_PATH = "res/textures/asteroid_medium.png";
+	static constexpr const char* SMALL_TEXTURE_PATH = "res/textures/asteroid_small.png";
 
-		// Sprites (uno por tamaño)
-		constexpr const char* LARGE_TEXTURE_PATH = "res/textures/asteroid_large.png";
-		constexpr const char* MEDIUM_TEXTURE_PATH = "res/textures/asteroid_medium.png";
-		constexpr const char* SMALL_TEXTURE_PATH = "res/textures/asteroid_small.png";
+	// La roca ocupa el 92% del ancho de la imagen (el resto es transparente)
+	static constexpr float TEXTURE_FILL = 0.92f;
 
-		// La roca ocupa el 92% del ancho de la imagen (el resto es transparente)
-		constexpr float TEXTURE_FILL = 0.92f;
+	static Texture2D largeTexture = {};
+	static Texture2D mediumTexture = {};
+	static Texture2D smallTexture = {};
 
-		Texture2D largeTexture = {};
-		Texture2D mediumTexture = {};
-		Texture2D smallTexture = {};
-
-		const Texture2D& GetTexture(Size size)
+	static const Texture2D& GetTexture(Size size)
+	{
+		switch (size)
 		{
-			switch (size)
-			{
-			case Size::Large:
-				return largeTexture;
-			case Size::Medium:
-				return mediumTexture;
-			case Size::Small:
-				return smallTexture;
-			}
-
+		case Size::Large:
+			return largeTexture;
+		case Size::Medium:
+			return mediumTexture;
+		case Size::Small:
 			return smallTexture;
 		}
 
-		// Numero al azar entre min y max (con decimales)
-		float RandomFloat(float min, float max)
+		return smallTexture;
+	}
+
+	// Numero al azar entre min y max (con decimales)
+	static float RandomFloat(float min, float max)
+	{
+		constexpr int PRECISION = 10000;
+		const float randomPercent = static_cast<float>(GetRandomValue(0, PRECISION)) / static_cast<float>(PRECISION);
+
+		return min + (max - min) * randomPercent;
+	}
+
+	static float GetRadius(Size size)
+	{
+		switch (size)
 		{
-			constexpr int PRECISION = 10000;
-			const float randomPercent = static_cast<float>(GetRandomValue(0, PRECISION)) / static_cast<float>(PRECISION);
-
-			return min + (max - min) * randomPercent;
-		}
-
-		float GetRadius(Size size)
-		{
-			switch (size)
-			{
-			case Size::Large:
-				return LARGE_RADIUS;
-			case Size::Medium:
-				return MEDIUM_RADIUS;
-			case Size::Small:
-				return SMALL_RADIUS;
-			}
-
+		case Size::Large:
+			return LARGE_RADIUS;
+		case Size::Medium:
+			return MEDIUM_RADIUS;
+		case Size::Small:
 			return SMALL_RADIUS;
 		}
 
-		float GetRandomSpeed(Size size)
+		return SMALL_RADIUS;
+	}
+
+	static float GetRandomSpeed(Size size)
+	{
+		switch (size)
 		{
-			switch (size)
-			{
-			case Size::Large:
-				return RandomFloat(LARGE_MIN_SPEED, LARGE_MAX_SPEED);
-			case Size::Medium:
-				return RandomFloat(MEDIUM_MIN_SPEED, MEDIUM_MAX_SPEED);
-			case Size::Small:
-				return RandomFloat(SMALL_MIN_SPEED, SMALL_MAX_SPEED);
-			}
-
-			return SMALL_MIN_SPEED;
+		case Size::Large:
+			return RandomFloat(LARGE_MIN_SPEED, LARGE_MAX_SPEED);
+		case Size::Medium:
+			return RandomFloat(MEDIUM_MIN_SPEED, MEDIUM_MAX_SPEED);
+		case Size::Small:
+			return RandomFloat(SMALL_MIN_SPEED, SMALL_MAX_SPEED);
 		}
+
+		return SMALL_MIN_SPEED;
 	}
 
-	void LoadTextures()
-	{
-		largeTexture = LoadTexture(LARGE_TEXTURE_PATH);
-		mediumTexture = LoadTexture(MEDIUM_TEXTURE_PATH);
-		smallTexture = LoadTexture(SMALL_TEXTURE_PATH);
-
-		SetTextureFilter(largeTexture, TEXTURE_FILTER_BILINEAR);
-		SetTextureFilter(mediumTexture, TEXTURE_FILTER_BILINEAR);
-		SetTextureFilter(smallTexture, TEXTURE_FILTER_BILINEAR);
-	}
-
-	void UnloadTextures()
-	{
-		UnloadTexture(largeTexture);
-		UnloadTexture(mediumTexture);
-		UnloadTexture(smallTexture);
-	}
-
-	void InitAll(Asteroid asteroids[])
-	{
-		for (int i = 0; i < MAX_ASTEROIDS; i++)
-		{
-			asteroids[i] = {};
-			asteroids[i].isActive = false;
-		}
-	}
-
-	void Spawn(Asteroid asteroids[], Vector2 position, float direction, Size size)
+	// Activa un asteroide libre con esos datos (si hay alguno libre)
+	static void Spawn(Asteroid asteroids[], Vector2 position, float direction, Size size)
 	{
 		// Busca el primer lugar libre
 		for (int i = 0; i < MAX_ASTEROIDS; i++)
@@ -138,7 +121,7 @@ namespace ReyesCuadra::asteroid
 				asteroids[i].velocity.y = std::sin(direction) * speed;
 				asteroids[i].size = size;
 				asteroids[i].radius = GetRadius(size);
-				asteroids[i].rotation = RandomFloat(0.0f, 360.0f);
+				asteroids[i].rotation = RandomFloat(0.0f, FULL_TURN_DEGREES);
 				asteroids[i].rotationSpeed = RandomFloat(-MAX_ROTATION_SPEED, MAX_ROTATION_SPEED);
 				asteroids[i].isActive = true;
 
@@ -147,6 +130,26 @@ namespace ReyesCuadra::asteroid
 		}
 
 		// Si no hay lugar libre, no aparece
+	}
+
+	void LoadTextures()
+	{
+		largeTexture = LoadTexture(LARGE_TEXTURE_PATH);
+		mediumTexture = LoadTexture(MEDIUM_TEXTURE_PATH);
+		smallTexture = LoadTexture(SMALL_TEXTURE_PATH);
+
+		SetTextureFilter(largeTexture, TEXTURE_FILTER_BILINEAR);
+		SetTextureFilter(mediumTexture, TEXTURE_FILTER_BILINEAR);
+		SetTextureFilter(smallTexture, TEXTURE_FILTER_BILINEAR);
+	}
+
+	void InitAll(Asteroid asteroids[])
+	{
+		for (int i = 0; i < MAX_ASTEROIDS; i++)
+		{
+			asteroids[i] = {};
+			asteroids[i].isActive = false;
+		}
 	}
 
 	void SpawnFromEdge(Asteroid asteroids[])
@@ -159,19 +162,21 @@ namespace ReyesCuadra::asteroid
 
 		Vector2 position = {};
 
-		// Elige un borde al azar: 0 arriba, 1 derecha, 2 abajo, 3 izquierda
-		switch (GetRandomValue(0, 3))
+		// Elige un borde al azar
+		const ScreenEdge edge = static_cast<ScreenEdge>(GetRandomValue(0, SCREEN_EDGE_COUNT - 1));
+
+		switch (edge)
 		{
-		case 0:
+		case ScreenEdge::Top:
 			position = { RandomFloat(0.0f, screenWidth), -outside };
 			break;
-		case 1:
+		case ScreenEdge::Right:
 			position = { screenWidth + outside, RandomFloat(0.0f, screenHeight) };
 			break;
-		case 2:
+		case ScreenEdge::Bottom:
 			position = { RandomFloat(0.0f, screenWidth), screenHeight + outside };
 			break;
-		default:
+		case ScreenEdge::Left:
 			position = { -outside, RandomFloat(0.0f, screenHeight) };
 			break;
 		}
@@ -263,5 +268,12 @@ namespace ReyesCuadra::asteroid
 			// La rotacion del asteroide ya esta en grados
 			DrawTexturePro(texture, source, destination, origin, asteroids[i].rotation, WHITE);
 		}
+	}
+
+	void UnloadTextures()
+	{
+		UnloadTexture(largeTexture);
+		UnloadTexture(mediumTexture);
+		UnloadTexture(smallTexture);
 	}
 }

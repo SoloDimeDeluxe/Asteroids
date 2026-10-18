@@ -15,129 +15,125 @@
 
 namespace ReyesCuadra::game
 {
-	// Privado de este archivo
-	namespace
+	static Screen currentScreen = Screen::Menu;
+
+	// Cambia de pantalla y la reinicia
+	static void ChangeScreen(Screen newScreen)
 	{
-		Screen currentScreen = Screen::Menu;
+		currentScreen = newScreen;
 
-		// Cambia de pantalla y la reinicia
-		void ChangeScreen(Screen newScreen)
+		// Al salir del gameplay el motor deja de sonar
+		audio::UpdateThrust(false);
+
+		switch (currentScreen)
 		{
-			currentScreen = newScreen;
+		case Screen::Menu:
+			menu::Init();
+			audio::PlayMusic(audio::MusicTrack::Menu);
+			break;
+		case Screen::Gameplay:
+			gameplay::Init();
+			audio::PlayMusic(audio::MusicTrack::Gameplay);
+			break;
+		case Screen::Credits:
+			credits::Init();
+			audio::PlayMusic(audio::MusicTrack::Menu);
+			break;
+		case Screen::Exit:
+			break;
+		}
+	}
 
-			// Al salir del gameplay el motor deja de sonar
-			audio::UpdateThrust(false);
+	static void Init()
+	{
+		InitWindow(config::SCREEN_WIDTH, config::SCREEN_HEIGHT, config::GAME_TITLE);
+		SetTargetFPS(config::TARGET_FPS);
 
-			switch (currentScreen)
-			{
-			case Screen::Menu:
-				menu::Init();
-				audio::PlayMusic(audio::MusicTrack::Menu);
-				break;
-			case Screen::Gameplay:
-				gameplay::Init();
-				audio::PlayMusic(audio::MusicTrack::Gameplay);
-				break;
-			case Screen::Credits:
-				credits::Init();
-				audio::PlayMusic(audio::MusicTrack::Menu);
-				break;
-			case Screen::Exit:
-				break;
-			}
+		// ESC no cierra la ventana: lo maneja cada pantalla
+		SetExitKey(KEY_NULL);
+
+		// Las rutas "res/..." se buscan desde la carpeta del .exe,
+		// asi funciona igual desde Visual Studio o abriendo el .exe suelto
+		ChangeDirectory(GetApplicationDirectory());
+
+		audio::Init();
+
+		ship::LoadTextures();
+		asteroid::LoadTextures();
+		bullet::LoadTexture();
+		ui::LoadCursorTexture();
+
+		// Se usa la mira propia en vez del cursor del sistema
+		HideCursor();
+
+		ChangeScreen(Screen::Menu);
+	}
+
+	// Actualiza la pantalla activa
+	static void Update()
+	{
+		audio::UpdateMusic();
+
+		Screen nextScreen = currentScreen;
+
+		switch (currentScreen)
+		{
+		case Screen::Menu:
+			nextScreen = menu::Update();
+			break;
+		case Screen::Gameplay:
+			nextScreen = gameplay::Update();
+			break;
+		case Screen::Credits:
+			nextScreen = credits::Update();
+			break;
+		case Screen::Exit:
+			break;
 		}
 
-		void Init()
+		if (nextScreen != currentScreen)
 		{
-			InitWindow(config::SCREEN_WIDTH, config::SCREEN_HEIGHT, config::GAME_TITLE);
-			SetTargetFPS(config::TARGET_FPS);
+			ChangeScreen(nextScreen);
+		}
+	}
 
-			// ESC no cierra la ventana: lo maneja cada pantalla
-			SetExitKey(KEY_NULL);
+	// Dibuja la pantalla activa
+	static void Draw()
+	{
+		BeginDrawing();
+		ClearBackground(BLACK);
 
-			// Las rutas "res/..." se buscan desde la carpeta del .exe,
-			// asi funciona igual desde Visual Studio o abriendo el .exe suelto
-			ChangeDirectory(GetApplicationDirectory());
-
-			audio::Init();
-
-			ship::LoadTextures();
-			asteroid::LoadTextures();
-			bullet::LoadTexture();
-			ui::LoadCursorTexture();
-
-			// Se usa la mira propia en vez del cursor del sistema
-			HideCursor();
-
-			ChangeScreen(Screen::Menu);
+		switch (currentScreen)
+		{
+		case Screen::Menu:
+			menu::Draw();
+			break;
+		case Screen::Gameplay:
+			gameplay::Draw();
+			break;
+		case Screen::Credits:
+			credits::Draw();
+			break;
+		case Screen::Exit:
+			break;
 		}
 
-		// Actualiza la pantalla activa
-		void Update()
-		{
-			audio::UpdateMusic();
+		// La mira va ultima para quedar encima de todo
+		ui::DrawCursor();
 
-			Screen nextScreen = currentScreen;
+		EndDrawing();
+	}
 
-			switch (currentScreen)
-			{
-			case Screen::Menu:
-				nextScreen = menu::Update();
-				break;
-			case Screen::Gameplay:
-				nextScreen = gameplay::Update();
-				break;
-			case Screen::Credits:
-				nextScreen = credits::Update();
-				break;
-			case Screen::Exit:
-				break;
-			}
+	static void Close()
+	{
+		ship::UnloadTextures();
+		asteroid::UnloadTextures();
+		bullet::UnloadTexture();
+		ui::UnloadCursorTexture();
 
-			if (nextScreen != currentScreen)
-			{
-				ChangeScreen(nextScreen);
-			}
-		}
+		audio::Close();
 
-		// Dibuja la pantalla activa
-		void Draw()
-		{
-			BeginDrawing();
-			ClearBackground(BLACK);
-
-			switch (currentScreen)
-			{
-			case Screen::Menu:
-				menu::Draw();
-				break;
-			case Screen::Gameplay:
-				gameplay::Draw();
-				break;
-			case Screen::Credits:
-				credits::Draw();
-				break;
-			case Screen::Exit:
-				break;
-			}
-
-			// La mira va ultima para quedar encima de todo
-			ui::DrawCursor();
-
-			EndDrawing();
-		}
-
-		void Close()
-		{
-			ship::UnloadTextures();
-			asteroid::UnloadTextures();
-			bullet::UnloadTexture();
-			ui::UnloadCursorTexture();
-
-			audio::Close();
-
-			CloseWindow();
-		}
+		CloseWindow();
 	}
 
 	void Run()

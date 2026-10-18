@@ -4,54 +4,51 @@
 
 namespace ReyesCuadra::audio
 {
-	namespace
+	static constexpr float SOUND_VOLUME = 0.6f;
+	static constexpr float THRUST_VOLUME = 0.35f;
+	static constexpr float MUSIC_VOLUME = 0.45f;
+
+	static Sound shootSound = {};
+	static Sound asteroidExplosionSound = {};
+	static Sound shipExplosionSound = {};
+	static Sound buttonClickSound = {};
+	static Sound gameOverSound = {};
+	static Sound thrustSound = {};
+
+	static Music menuMusic = {};
+	static Music gameplayMusic = {};
+
+	// Musica que esta sonando ahora (nullptr = ninguna)
+	static Music* currentMusic = nullptr;
+
+	static Sound LoadSoundWithVolume(const char* path, float volume)
 	{
-		constexpr float SOUND_VOLUME = 0.6f;
-		constexpr float THRUST_VOLUME = 0.35f;
-		constexpr float MUSIC_VOLUME = 0.45f;
+		Sound sound = LoadSound(path);
+		SetSoundVolume(sound, volume);
 
-		Sound shootSound = {};
-		Sound asteroidExplosionSound = {};
-		Sound shipExplosionSound = {};
-		Sound buttonClickSound = {};
-		Sound gameOverSound = {};
-		Sound thrustSound = {};
+		return sound;
+	}
 
-		Music menuMusic = {};
-		Music gameplayMusic = {};
+	static Music LoadLoopingMusic(const char* path)
+	{
+		Music music = LoadMusicStream(path);
+		music.looping = true; // Al terminar vuelve a empezar
+		SetMusicVolume(music, MUSIC_VOLUME);
 
-		// Musica que esta sonando ahora (nullptr = ninguna)
-		Music* currentMusic = nullptr;
+		return music;
+	}
 
-		Sound LoadSoundWithVolume(const char* path, float volume)
+	static Music* GetMusic(MusicTrack track)
+	{
+		switch (track)
 		{
-			Sound sound = LoadSound(path);
-			SetSoundVolume(sound, volume);
-
-			return sound;
-		}
-
-		Music LoadLoopingMusic(const char* path)
-		{
-			Music music = LoadMusicStream(path);
-			music.looping = true; // Al terminar vuelve a empezar
-			SetMusicVolume(music, MUSIC_VOLUME);
-
-			return music;
-		}
-
-		Music* GetMusic(MusicTrack track)
-		{
-			switch (track)
-			{
-			case MusicTrack::Menu:
-				return &menuMusic;
-			case MusicTrack::Gameplay:
-				return &gameplayMusic;
-			}
-
+		case MusicTrack::Menu:
 			return &menuMusic;
+		case MusicTrack::Gameplay:
+			return &gameplayMusic;
 		}
+
+		return &menuMusic;
 	}
 
 	void Init()
@@ -67,23 +64,6 @@ namespace ReyesCuadra::audio
 
 		menuMusic = LoadLoopingMusic("res/music/menu_music.ogg");
 		gameplayMusic = LoadLoopingMusic("res/music/gameplay_music.ogg");
-	}
-
-	void Close()
-	{
-		UnloadSound(shootSound);
-		UnloadSound(asteroidExplosionSound);
-		UnloadSound(shipExplosionSound);
-		UnloadSound(buttonClickSound);
-		UnloadSound(gameOverSound);
-		UnloadSound(thrustSound);
-
-		UnloadMusicStream(menuMusic);
-		UnloadMusicStream(gameplayMusic);
-
-		currentMusic = nullptr;
-
-		CloseAudioDevice();
 	}
 
 	void PlaySoundEffect(SoundEffect soundEffect)
@@ -149,5 +129,22 @@ namespace ReyesCuadra::audio
 		{
 			StopSound(thrustSound);
 		}
+	}
+
+	void Close()
+	{
+		UnloadSound(shootSound);
+		UnloadSound(asteroidExplosionSound);
+		UnloadSound(shipExplosionSound);
+		UnloadSound(buttonClickSound);
+		UnloadSound(gameOverSound);
+		UnloadSound(thrustSound);
+
+		UnloadMusicStream(menuMusic);
+		UnloadMusicStream(gameplayMusic);
+
+		currentMusic = nullptr;
+
+		CloseAudioDevice();
 	}
 }
