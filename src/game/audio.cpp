@@ -6,6 +6,7 @@ namespace ReyesCuadra::audio
 {
 	static constexpr float SOUND_VOLUME = 0.6f;
 	static constexpr float THRUST_VOLUME = 0.35f;
+	static constexpr float UFO_HUM_VOLUME = 0.25f;
 	static constexpr float MUSIC_VOLUME = 0.45f;
 
 	static Sound shootSound = {};
@@ -15,6 +16,8 @@ namespace ReyesCuadra::audio
 	static Sound gameOverSound = {};
 	static Sound thrustSound = {};
 	static Sound bombSound = {};
+	static Sound ufoShootSound = {};
+	static Sound ufoHumSound = {};
 
 	static Music menuMusic = {};
 	static Music gameplayMusic = {};
@@ -63,6 +66,8 @@ namespace ReyesCuadra::audio
 		gameOverSound = LoadSoundWithVolume("res/sounds/game_over.wav", SOUND_VOLUME);
 		thrustSound = LoadSoundWithVolume("res/sounds/thrust.wav", THRUST_VOLUME);
 		bombSound = LoadSoundWithVolume("res/sounds/bomb.wav", SOUND_VOLUME);
+		ufoShootSound = LoadSoundWithVolume("res/sounds/ufo_shoot.wav", SOUND_VOLUME);
+		ufoHumSound = LoadSoundWithVolume("res/sounds/ufo_hum.wav", UFO_HUM_VOLUME);
 
 		menuMusic = LoadLoopingMusic("res/music/menu_music.ogg");
 		gameplayMusic = LoadLoopingMusic("res/music/gameplay_music.ogg");
@@ -89,6 +94,9 @@ namespace ReyesCuadra::audio
 			break;
 		case SoundEffect::Bomb:
 			PlaySound(bombSound);
+			break;
+		case SoundEffect::UfoShoot:
+			PlaySound(ufoShootSound);
 			break;
 		}
 	}
@@ -136,6 +144,22 @@ namespace ReyesCuadra::audio
 		}
 	}
 
+	void UpdateUfoHum(bool isUfoOnScreen)
+	{
+		// Mismo sistema que el motor: si termino de sonar lo vuelve a arrancar
+		if (isUfoOnScreen)
+		{
+			if (!IsSoundPlaying(ufoHumSound))
+			{
+				PlaySound(ufoHumSound);
+			}
+		}
+		else if (IsSoundPlaying(ufoHumSound))
+		{
+			StopSound(ufoHumSound);
+		}
+	}
+
 	void Close()
 	{
 		UnloadSound(shootSound);
@@ -145,6 +169,8 @@ namespace ReyesCuadra::audio
 		UnloadSound(gameOverSound);
 		UnloadSound(thrustSound);
 		UnloadSound(bombSound);
+		UnloadSound(ufoShootSound);
+		UnloadSound(ufoHumSound);
 
 		UnloadMusicStream(menuMusic);
 		UnloadMusicStream(gameplayMusic);

@@ -6,6 +6,7 @@
 #include "entities/bullet.h"
 #include "entities/powerup.h"
 #include "entities/ship.h"
+#include "entities/ufo.h"
 #include "game/audio.h"
 #include "game/screen.h"
 #include "screens/credits.h"
@@ -24,8 +25,9 @@ namespace ReyesCuadra::game
 	{
 		currentScreen = newScreen;
 
-		// Al salir del gameplay el motor deja de sonar
+		// Al salir del gameplay el motor y el OVNI dejan de sonar
 		audio::UpdateThrust(false);
+		audio::UpdateUfoHum(false);
 
 		switch (currentScreen)
 		{
@@ -66,7 +68,8 @@ namespace ReyesCuadra::game
 
 		ship::LoadTextures();
 		asteroid::LoadTextures();
-		bullet::LoadTexture();
+		bullet::LoadTextures();
+		ufo::LoadTexture();
 		powerup::LoadTexture();
 		ui::LoadCursorTexture();
 
@@ -141,7 +144,8 @@ namespace ReyesCuadra::game
 	{
 		ship::UnloadTextures();
 		asteroid::UnloadTextures();
-		bullet::UnloadTexture();
+		bullet::UnloadTextures();
+		ufo::UnloadTexture();
 		powerup::UnloadTexture();
 		ui::UnloadCursorTexture();
 

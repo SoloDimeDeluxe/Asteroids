@@ -6,6 +6,7 @@
 #include "entities/bullet.h"
 #include "entities/powerup.h"
 #include "entities/ship.h"
+#include "entities/ufo.h"
 #include "game/audio.h"
 #include "utils/collision.h"
 #include "utils/config.h"
@@ -32,7 +33,9 @@ namespace ReyesCuadra::gameplay
 
 	// Pantalla de derrota
 	static constexpr int FINAL_SCORE_FONT_SIZE = 35;
-	static constexpr int FINAL_SCORE_POSITION_Y = 290;
+	static constexpr int FINAL_SCORE_POSITION_Y = 275;
+	static constexpr int FINAL_DETAIL_FONT_SIZE = 22;
+	static constexpr int FINAL_DETAIL_POSITION_Y = 322;
 
 	// Vidas y puntaje (HUD)
 	static constexpr int INITIAL_LIVES = 3;
@@ -54,6 +57,10 @@ namespace ReyesCuadra::gameplay
 	static constexpr float BOMB_FLASH_DURATION = 0.5f;     // Destello blanco al explotar
 	static constexpr float BOMB_FLASH_MAX_OPACITY = 0.8f;
 
+	// OVNI enemigo
+	static constexpr float UFO_SPAWN_INTERVAL = 20.0f;     // Segundos sin OVNI hasta que aparece uno
+	static constexpr int UFO_POINTS = 5;                   // Puntos por destruir un OVNI (un asteroide da 1)
+
 	// Aparicion de asteroides
 	static constexpr int INITIAL_ASTEROIDS = 4;
 	static constexpr float SPAWN_INTERVAL = 5.0f;      // Segundos entre cada asteroide nuevo
@@ -65,16 +72,21 @@ namespace ReyesCuadra::gameplay
 	static float gameOverDelayLeft = 0.0f;
 	static float controlsHintTimeLeft = 0.0f;
 	static int lives = INITIAL_LIVES;
-	static int score = 0;                              // Asteroides destruidos con balas
+	static int asteroidsDestroyed = 0;                 // Con balas o con la bomba
+	static int ufosDestroyed = 0;
 
 	static ship::Ship playerShip = {};
-	static bullet::Bullet bullets[bullet::MAX_BULLETS] = {};
+	static bullet::Bullet playerBullets[bullet::MAX_BULLETS] = {};
+	static bullet::Bullet enemyBullets[bullet::MAX_BULLETS] = {};
 	static asteroid::Asteroid asteroids[asteroid::MAX_ASTEROIDS] = {};
 	static float spawnTimer = 0.0f;
 
 	static powerup::PowerUp bombPowerUp = {};
 	static float powerUpSpawnTimer = 0.0f;
 	static float bombFlashTimeLeft = 0.0f;
+
+	static ufo::Ufo enemyUfo = {};
+	static float ufoSpawnTimer = 0.0f;
 
 	static ui::Button pauseButton = {};
 
@@ -85,6 +97,12 @@ namespace ReyesCuadra::gameplay
 	// Menu de derrota
 	static ui::Button retryButton = {};
 	static ui::Button gameOverMenuButton = {};
+
+	// Cada asteroide da 1 punto y cada OVNI da UFO_POINTS
+	static int GetScore()
+	{
+		return asteroidsDestroyed + ufosDestroyed * UFO_POINTS;
+	}
 
 	// Clic izquierdo (o espacio) dispara.
 	// Si el mouse esta sobre el boton de pausa no dispara,
@@ -117,7 +135,7 @@ namespace ReyesCuadra::gameplay
 	{
 		for (int bulletIndex = 0; bulletIndex < bullet::MAX_BULLETS; bulletIndex++)
 		{
-			if (!bullets[bulletIndex].isActive)
+			if (!playerBullets[bulletIndex].isActive)
 			{
 				continue;
 			}
@@ -129,20 +147,36 @@ namespace ReyesCuadra::gameplay
 					continue;
 				}
 
-				if (collision::AreCirclesColliding(bullets[bulletIndex].position, bullet::RADIUS,
+				if (collision::AreCirclesColliding(playerBullets[bulletIndex].position, bullet::RADIUS,
 					asteroids[asteroidIndex].position, asteroids[asteroidIndex].radius))
 				{
-					bullets[bulletIndex].isActive = false;
+					playerBullets[bulletIndex].isActive = false;
 					asteroid::Destroy(asteroids, asteroidIndex);
 					audio::PlaySoundEffect(audio::SoundEffect::AsteroidExplosion);
-
-					// Un punto por cada asteroide destruido
-					score++;
+					asteroidsDestroyed++;
 
 					// Esta bala ya se gasto, pasa a la siguiente
 					break;
 				}
 			}
+		}
+	}
+
+	// Pierde una vida: reaparece en el centro, o si era la ultima, la nave queda destruida
+	static void LoseLife()
+	{
+		audio::PlaySoundEffect(audio::SoundEffect::ShipExplosion);
+		lives--;
+
+		if (lives > 0)
+		{
+			ship::Respawn(playerShip);
+		}
+		else
+		{
+			// No muestra el GAME OVER de golpe: primero deja ver el choque
+			isShipDestroyed = true;
+			gameOverDelayLeft = GAME_OVER_DELAY;
 		}
 	}
 
@@ -166,21 +200,97 @@ namespace ReyesCuadra::gameplay
 			{
 				// El asteroide tambien se rompe con el choque (pero no suma puntos)
 				asteroid::Destroy(asteroids, asteroidIndex);
-				audio::PlaySoundEffect(audio::SoundEffect::ShipExplosion);
-				lives--;
-
-				if (lives > 0)
-				{
-					ship::Respawn(playerShip);
-				}
-				else
-				{
-					// No muestra el GAME OVER de golpe: primero deja ver el choque
-					isShipDestroyed = true;
-					gameOverDelayLeft = GAME_OVER_DELAY;
-				}
+				LoseLife();
 
 				// Un solo choque por frame
+				return;
+			}
+		}
+	}
+
+	// Si no hay OVNI, cada UFO_SPAWN_INTERVAL segundos aparece uno. Si hay, se mueve y dispara
+	static void UpdateUfo()
+	{
+		if (enemyUfo.isActive)
+		{
+			ufo::Update(enemyUfo);
+
+			// Le dispara a la nave (si sigue viva)
+			if (!isShipDestroyed && ufo::ShouldShoot(enemyUfo))
+			{
+				const float shotDirection = ufo::GetShotDirection(enemyUfo, playerShip.position);
+
+				if (bullet::Fire(enemyBullets, enemyUfo.position, shotDirection, bullet::BulletType::Enemy))
+				{
+					audio::PlaySoundEffect(audio::SoundEffect::UfoShoot);
+				}
+			}
+		}
+		else
+		{
+			ufoSpawnTimer += GetFrameTime();
+
+			if (ufoSpawnTimer >= UFO_SPAWN_INTERVAL)
+			{
+				ufoSpawnTimer = 0.0f;
+				ufo::Spawn(enemyUfo);
+			}
+		}
+
+		audio::UpdateUfoHum(enemyUfo.isActive);
+	}
+
+	// Si una bala de la nave toca al OVNI, se destruyen los dos
+	static void CheckBulletUfoCollisions()
+	{
+		if (!enemyUfo.isActive)
+		{
+			return;
+		}
+
+		for (int bulletIndex = 0; bulletIndex < bullet::MAX_BULLETS; bulletIndex++)
+		{
+			if (playerBullets[bulletIndex].isActive &&
+				collision::AreCirclesColliding(playerBullets[bulletIndex].position, bullet::RADIUS,
+					enemyUfo.position, ufo::COLLISION_RADIUS))
+			{
+				playerBullets[bulletIndex].isActive = false;
+				enemyUfo.isActive = false;
+				ufosDestroyed++;
+				audio::PlaySoundEffect(audio::SoundEffect::AsteroidExplosion);
+				return;
+			}
+		}
+	}
+
+	// Si la nave choca con el OVNI o la toca una bala del OVNI, pierde una vida
+	static void CheckShipUfoCollisions()
+	{
+		if (ship::IsInvulnerable(playerShip))
+		{
+			return;
+		}
+
+		// Choque con el OVNI: se destruye tambien (pero no suma puntos)
+		if (enemyUfo.isActive &&
+			collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
+				enemyUfo.position, ufo::COLLISION_RADIUS))
+		{
+			enemyUfo.isActive = false;
+			LoseLife();
+			return;
+		}
+
+		for (int bulletIndex = 0; bulletIndex < bullet::MAX_BULLETS; bulletIndex++)
+		{
+			if (enemyBullets[bulletIndex].isActive &&
+				collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
+					enemyBullets[bulletIndex].position, bullet::RADIUS))
+			{
+				enemyBullets[bulletIndex].isActive = false;
+				LoseLife();
+
+				// Un solo golpe por frame
 				return;
 			}
 		}
@@ -205,7 +315,7 @@ namespace ReyesCuadra::gameplay
 		}
 	}
 
-	// Si la nave agarra la bomba, destruye todos los asteroides y suma un punto por cada uno
+	// Si la nave agarra la bomba, destruye todo lo que hay en pantalla (asteroides, OVNI y sus balas)
 	static void CheckShipPowerUpCollision()
 	{
 		if (!bombPowerUp.isActive)
@@ -217,13 +327,21 @@ namespace ReyesCuadra::gameplay
 			bombPowerUp.position, powerup::COLLISION_RADIUS))
 		{
 			bombPowerUp.isActive = false;
-			score += asteroid::DestroyAll(asteroids);
+			asteroidsDestroyed += asteroid::DestroyAll(asteroids);
+
+			if (enemyUfo.isActive)
+			{
+				enemyUfo.isActive = false;
+				ufosDestroyed++;
+			}
+
+			bullet::InitAll(enemyBullets);
 			bombFlashTimeLeft = BOMB_FLASH_DURATION;
 			audio::PlaySoundEffect(audio::SoundEffect::Bomb);
 		}
 	}
 
-	// Aca va la logica de la partida (nave, asteroides, balas)
+	// Aca va la logica de la partida (nave, asteroides, OVNI, balas y power-up)
 	static void UpdateMatch()
 	{
 		// Sin vidas la nave ya no se mueve ni dispara, pero los asteroides siguen de fondo
@@ -234,7 +352,7 @@ namespace ReyesCuadra::gameplay
 			if (IsFirePressed())
 			{
 				// Solo suena si de verdad salio una bala
-				if (bullet::Fire(bullets, ship::GetNosePosition(playerShip), playerShip.rotation))
+				if (bullet::Fire(playerBullets, ship::GetNosePosition(playerShip), playerShip.rotation, bullet::BulletType::Player))
 				{
 					audio::PlaySoundEffect(audio::SoundEffect::Shoot);
 				}
@@ -244,16 +362,25 @@ namespace ReyesCuadra::gameplay
 		// El motor suena solo mientras la nave (viva) acelera
 		audio::UpdateThrust(!isShipDestroyed && playerShip.isAccelerating);
 
-		bullet::UpdateAll(bullets);
+		bullet::UpdateAll(playerBullets);
+		bullet::UpdateAll(enemyBullets);
 
 		UpdateAsteroidSpawn();
 		asteroid::UpdateAll(asteroids);
+		UpdateUfo();
 
 		CheckBulletAsteroidCollisions();
+		CheckBulletUfoCollisions();
 
+		// Por separado: si el primer choque fue el ultimo, la nave ya no puede volver a chocar
 		if (!isShipDestroyed)
 		{
 			CheckShipAsteroidCollisions();
+		}
+
+		if (!isShipDestroyed)
+		{
+			CheckShipUfoCollisions();
 		}
 
 		UpdatePowerUp();
@@ -291,7 +418,7 @@ namespace ReyesCuadra::gameplay
 	static void DrawHud()
 	{
 		DrawText(TextFormat("VIDAS: %d", lives), HUD_MARGIN, HUD_MARGIN, HUD_FONT_SIZE, RAYWHITE);
-		DrawText(TextFormat("PUNTAJE: %d", score), HUD_MARGIN, HUD_MARGIN + HUD_LINE_SPACING, HUD_FONT_SIZE, RAYWHITE);
+		DrawText(TextFormat("PUNTAJE: %d", GetScore()), HUD_MARGIN, HUD_MARGIN + HUD_LINE_SPACING, HUD_FONT_SIZE, RAYWHITE);
 	}
 
 	// Controles abajo de la pantalla durante los primeros segundos
@@ -333,7 +460,9 @@ namespace ReyesCuadra::gameplay
 	{
 		asteroid::DrawAll(asteroids);
 		powerup::Draw(bombPowerUp);
-		bullet::DrawAll(bullets);
+		ufo::Draw(enemyUfo);
+		bullet::DrawAll(enemyBullets);
+		bullet::DrawAll(playerBullets);
 
 		if (isShipDestroyed)
 		{
@@ -370,8 +499,10 @@ namespace ReyesCuadra::gameplay
 		DrawDarkLayer();
 
 		ui::DrawCenteredText("GAME OVER", TITLE_POSITION_Y, TITLE_FONT_SIZE, RED);
-		ui::DrawCenteredText(TextFormat("Asteroides destruidos: %d", score),
+		ui::DrawCenteredText(TextFormat("PUNTAJE: %d", GetScore()),
 			FINAL_SCORE_POSITION_Y, FINAL_SCORE_FONT_SIZE, RAYWHITE);
+		ui::DrawCenteredText(TextFormat("Asteroides destruidos: %d   -   OVNIs destruidos: %d", asteroidsDestroyed, ufosDestroyed),
+			FINAL_DETAIL_POSITION_Y, FINAL_DETAIL_FONT_SIZE, LIGHTGRAY);
 
 		ui::DrawButton(retryButton);
 		ui::DrawButton(gameOverMenuButton);
@@ -421,12 +552,14 @@ namespace ReyesCuadra::gameplay
 		gameOverDelayLeft = 0.0f;
 		controlsHintTimeLeft = CONTROLS_HINT_DURATION;
 		lives = INITIAL_LIVES;
-		score = 0;
+		asteroidsDestroyed = 0;
+		ufosDestroyed = 0;
 
 		// Arranca en el centro e invulnerable (parpadeando) unos segundos,
 		// para que el jugador se acostumbre a los controles
 		ship::Respawn(playerShip);
-		bullet::InitAll(bullets);
+		bullet::InitAll(playerBullets);
+		bullet::InitAll(enemyBullets);
 
 		asteroid::InitAll(asteroids);
 		spawnTimer = 0.0f;
@@ -434,6 +567,9 @@ namespace ReyesCuadra::gameplay
 		bombPowerUp = powerup::Create();
 		powerUpSpawnTimer = 0.0f;
 		bombFlashTimeLeft = 0.0f;
+
+		enemyUfo = ufo::Create();
+		ufoSpawnTimer = 0.0f;
 
 		for (int i = 0; i < INITIAL_ASTEROIDS; i++)
 		{
@@ -479,8 +615,9 @@ namespace ReyesCuadra::gameplay
 		{
 			isPaused = true;
 
-			// En pausa el motor no suena
+			// En pausa el motor y el OVNI no suenan
 			audio::UpdateThrust(false);
+			audio::UpdateUfoHum(false);
 		}
 		else
 		{

@@ -28,6 +28,9 @@
     <ClCompile Include="src\entities\ship.cpp">
       <Filter>entities</Filter>
     </ClCompile>
+    <ClCompile Include="src\entities\ufo.cpp">
+      <Filter>entities</Filter>
+    </ClCompile>
     <ClCompile Include="src\game\audio.cpp">
       <Filter>game</Filter>
     </ClCompile>
@@ -70,6 +73,9 @@
       <Filter>entities</Filter>
     </ClInclude>
     <ClInclude Include="src\entities\ship.h">
+      <Filter>entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entities\ufo.h">
       <Filter>entities</Filter>
     </ClInclude>
     <ClInclude Include="src\game\audio.h">

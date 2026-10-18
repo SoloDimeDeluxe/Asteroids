@@ -146,6 +146,25 @@ def sfx_bomb():
     save_wav(SFX_DIR / "bomb.wav", np.concatenate([lowpass(chime, 5000), boom]))
 
 
+def sfx_ufo_shoot():
+    # lower and "wobblier" than the player's shot, so they are easy to tell apart
+    t = t_axis(0.22)
+    freq = np.linspace(700, 180, len(t)) * (1 + 0.08 * np.sin(2 * np.pi * 40 * t))
+    s = square(freq, t, duty=0.5) * np.exp(-t * 14)
+    save_wav(SFX_DIR / "ufo_shoot.wav", lowpass(s, 4000))
+
+
+def sfx_ufo_hum():
+    # 1 second siren that loops while the UFO is on screen
+    t = t_axis(1.0)
+    freq = 420 + 120 * np.sin(2 * np.pi * 4 * t)
+    s = triangle(freq, t) * 0.7 + square(freq * 0.5, t, duty=0.5) * 0.15
+    fade = int(0.02 * RATE)
+    s[:fade] *= np.linspace(0, 1, fade)
+    s[-fade:] *= np.linspace(1, 0, fade)
+    save_wav(SFX_DIR / "ufo_hum.wav", lowpass(s, 3000))
+
+
 # ------------------------------------------------------------------ music
 def render_song(bpm, bars, chords, lead_pattern, bass_style, drums, lead_duty, swing=0.0):
     beat = 60.0 / bpm
@@ -264,3 +283,5 @@ sfx_thrust()
 music_menu()
 music_gameplay()
 sfx_bomb()
+sfx_ufo_shoot()
+sfx_ufo_hum()

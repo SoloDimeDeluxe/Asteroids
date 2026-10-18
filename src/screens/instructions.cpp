@@ -21,7 +21,7 @@ namespace ReyesCuadra::instructions
 	static constexpr int SECTION_FONT_SIZE = 28;
 	static constexpr int TEXT_FONT_SIZE = 22;
 	static constexpr int FIRST_LINE_POSITION_Y = 120;
-	static constexpr int LINE_SPACING = 30;
+	static constexpr int LINE_SPACING = 29;
 	static constexpr int SECTION_EXTRA_SPACING = 16; // Espacio de mas antes de cada seccion
 
 	static constexpr float BACK_BUTTON_WIDTH = 220.0f;
@@ -34,9 +34,9 @@ namespace ReyesCuadra::instructions
 	static const InstructionLine LINES[] =
 	{
 		{ "OBJETIVO", true },
-		{ "Destruir la mayor cantidad de asteroides posible.", false },
+		{ "Sumar puntos: cada asteroide da 1 punto y cada OVNI da 5.", false },
 		{ "Los grandes se parten en medianos y los medianos en chicos.", false },
-		{ "Si un asteroide toca la nave, se pierde una vida.", false },
+		{ "Si algo toca la nave (asteroide, OVNI o bala), se pierde una vida.", false },
 		{ "Con las 3 vidas perdidas, termina la partida.", false },
 
 		{ "CONTROLES", true },
@@ -45,9 +45,9 @@ namespace ReyesCuadra::instructions
 		{ "Clic izquierdo o barra espaciadora: disparar", false },
 		{ "La nave no frena sola: para frenar, acelerar hacia el otro lado.", false },
 
-		{ "BOMBA", true },
-		{ "Cada tanto aparece una bomba: si la nave la toca,", false },
-		{ "destruye todos los asteroides de la pantalla. Dura pocos segundos.", false },
+		{ "BOMBA Y OVNI", true },
+		{ "Bomba: si la nave la toca, destruye todo lo que hay en pantalla.", false },
+		{ "OVNI: cruza la pantalla disparando a la nave. Hay que esquivarlo.", false },
 
 		{ "PAUSA", true },
 		{ "Boton PAUSA (arriba a la derecha), P o ESC: pausar el juego.", false },

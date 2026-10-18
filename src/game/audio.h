@@ -9,7 +9,8 @@ namespace ReyesCuadra::audio
 		ShipExplosion,
 		ButtonClick,
 		GameOver,
-		Bomb
+		Bomb,
+		UfoShoot
 	};
 
 	enum class MusicTrack
@@ -31,6 +32,9 @@ namespace ReyesCuadra::audio
 
 	// Sonido del motor: suena en loop mientras isAccelerating sea true
 	void UpdateThrust(bool isAccelerating);
+
+	// Zumbido del OVNI: suena en loop mientras isUfoOnScreen sea true
+	void UpdateUfoHum(bool isUfoOnScreen);
 
 	// Libera todo y cierra el dispositivo de audio (antes de CloseWindow)
 	void Close();

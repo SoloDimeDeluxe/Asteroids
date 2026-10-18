@@ -113,6 +113,7 @@
     <ClCompile Include="src\entities\bullet.cpp" />
     <ClCompile Include="src\entities\powerup.cpp" />
     <ClCompile Include="src\entities\ship.cpp" />
+    <ClCompile Include="src\entities\ufo.cpp" />
     <ClCompile Include="src\game\audio.cpp" />
     <ClCompile Include="src\game\game.cpp" />
     <ClCompile Include="src\screens\credits.cpp" />
@@ -129,6 +130,7 @@
     <ClInclude Include="src\entities\bullet.h" />
     <ClInclude Include="src\entities\powerup.h" />
     <ClInclude Include="src\entities\ship.h" />
+    <ClInclude Include="src\entities\ufo.h" />
     <ClInclude Include="src\game\audio.h" />
     <ClInclude Include="src\game\game.h" />
     <ClInclude Include="src\game\screen.h" />

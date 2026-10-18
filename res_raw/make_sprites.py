@@ -217,6 +217,48 @@ def make_powerup_bomb():
     finish(img, (48, 48), "powerup_bomb.png")
 
 
+# ---------------------------------------------------------------- enemy UFO (flying saucer)
+def make_ufo():
+    W, H = 72 * SS, 40 * SS
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    cx = W / 2
+
+    # glass dome
+    d.ellipse([cx - 14 * SS, 3 * SS, cx + 14 * SS, 27 * SS], fill=(90, 230, 160, 230), outline=(200, 255, 220, 255), width=SS)
+    d.ellipse([cx - 8 * SS, 7 * SS, cx - 1 * SS, 13 * SS], fill=(220, 255, 235, 255))
+
+    # saucer body
+    d.ellipse([3 * SS, 15 * SS, W - 3 * SS, 33 * SS], fill=(120, 60, 150, 255), outline=(230, 190, 255, 255), width=int(1.5 * SS))
+    d.ellipse([10 * SS, 15 * SS, W - 10 * SS, 24 * SS], fill=(170, 100, 200, 255))
+
+    # bottom part
+    d.ellipse([cx - 16 * SS, 26 * SS, cx + 16 * SS, 37 * SS], fill=(80, 40, 100, 255), outline=(230, 190, 255, 255), width=SS)
+
+    # lights around the body
+    for i in range(5):
+        x = 14 * SS + i * (W - 28 * SS) / 4
+        d.ellipse([x - 2.5 * SS, 24 * SS - 2.5 * SS, x + 2.5 * SS, 24 * SS + 2.5 * SS], fill=(255, 230, 90, 255))
+
+    finish(img, (72, 40), "ufo.png")
+
+
+# ---------------------------------------------------------------- enemy bullet (red glow)
+def make_enemy_bullet():
+    W = H = 16 * SS
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    px = img.load()
+    c = W / 2
+    for y in range(H):
+        for x in range(W):
+            dist = math.hypot(x - c, y - c) / c
+            if dist <= 1.0:
+                core = max(0.0, 1.0 - dist / 0.35)
+                glow = max(0.0, 1.0 - dist) ** 2
+                px[x, y] = (255, int(70 + 150 * core), int(60 + 150 * core), int(min(255, 255 * (glow + core))))
+    finish(img, (16, 16), "enemy_bullet.png")
+
+
 make_ship()
 make_flame()
 make_asteroid("asteroid_large.png", 11, 128)
@@ -225,3 +267,5 @@ make_asteroid("asteroid_small.png", 37, 32)
 make_bullet()
 make_cursor()
 make_powerup_bomb()
+make_ufo()
+make_enemy_bullet()
