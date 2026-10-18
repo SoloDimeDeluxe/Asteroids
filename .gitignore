@@ -7,3 +7,6 @@ x64/
 Debug/
 Release/
 *.exe
+
+# Portada de itch.io (se regenera con res_raw/make_cover.py)
+res_raw/itch_cover.png

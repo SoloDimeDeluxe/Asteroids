@@ -8,7 +8,7 @@ Todos los sprites, efectos de sonido y músicas son originales: se generan por c
 |---|---|
 | `make_sprites.py` | `res/textures/` (nave, fuego del motor, asteroides de 3 tamaños, bala y mira) |
 | `make_audio.py` | `res/sounds/` (6 efectos `.wav`) y `res/music/` (2 músicas `.ogg`) |
-| `make_cover.py` | `res_raw/itch_cover.png` (portada de 630x500 para itch.io, armada con los sprites del juego) |
+| `make_cover.py` | `res_raw/itch_cover.png` (portada de 630x500 para itch.io, armada con los sprites del juego; no se versiona porque se regenera con el script) |
 
 ## Cómo regenerar los assets
 
