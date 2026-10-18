@@ -111,6 +111,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\entities\asteroid.cpp" />
     <ClCompile Include="src\entities\bullet.cpp" />
+    <ClCompile Include="src\entities\powerup.cpp" />
     <ClCompile Include="src\entities\ship.cpp" />
     <ClCompile Include="src\game\audio.cpp" />
     <ClCompile Include="src\game\game.cpp" />
@@ -119,12 +120,14 @@
     <ClCompile Include="src\screens\instructions.cpp" />
     <ClCompile Include="src\screens\menu.cpp" />
     <ClCompile Include="src\utils\collision.cpp" />
+    <ClCompile Include="src\utils\random_utils.cpp" />
     <ClCompile Include="src\utils\screen_wrap.cpp" />
     <ClCompile Include="src\utils\ui.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\entities\asteroid.h" />
     <ClInclude Include="src\entities\bullet.h" />
+    <ClInclude Include="src\entities\powerup.h" />
     <ClInclude Include="src\entities\ship.h" />
     <ClInclude Include="src\game\audio.h" />
     <ClInclude Include="src\game\game.h" />
@@ -135,6 +138,7 @@
     <ClInclude Include="src\screens\menu.h" />
     <ClInclude Include="src\utils\collision.h" />
     <ClInclude Include="src\utils\config.h" />
+    <ClInclude Include="src\utils\random_utils.h" />
     <ClInclude Include="src\utils\screen_wrap.h" />
     <ClInclude Include="src\utils\ui.h" />
   </ItemGroup>

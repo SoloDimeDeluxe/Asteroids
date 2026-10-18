@@ -183,6 +183,40 @@ def make_cursor():
     finish(img, (32, 32), "cursor.png")
 
 
+# ---------------------------------------------------------------- bomb power-up
+def make_powerup_bomb():
+    W = H = 48 * SS
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    c = W / 2
+
+    # orange glow behind the bomb so it stands out from the asteroids
+    glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    gd.ellipse([c - 21 * SS, c - 19 * SS, c + 21 * SS, c + 23 * SS], fill=(255, 140, 30, 150))
+    img.alpha_composite(glow.filter(ImageFilter.GaussianBlur(5 * SS)))
+
+    d = ImageDraw.Draw(img)
+    body_cx, body_cy, r = c, c + 4 * SS, 14 * SS
+
+    # bomb body with a light from the top-left
+    d.ellipse([body_cx - r, body_cy - r, body_cx + r, body_cy + r], fill=(40, 40, 52, 255), outline=(230, 235, 255, 255), width=int(1.5 * SS))
+    d.ellipse([body_cx - r * 0.6, body_cy - r * 0.65, body_cx - r * 0.1, body_cy - r * 0.2], fill=(120, 125, 150, 255))
+
+    # cap and fuse
+    d.rectangle([body_cx - 4 * SS, body_cy - r - 4 * SS, body_cx + 4 * SS, body_cy - r + 2 * SS], fill=(150, 150, 165, 255), outline=(230, 235, 255, 255), width=SS)
+    d.line([(body_cx + 1 * SS, body_cy - r - 4 * SS), (body_cx + 6 * SS, body_cy - r - 10 * SS), (body_cx + 11 * SS, body_cy - r - 11 * SS)], fill=(200, 170, 120, 255), width=int(1.5 * SS))
+
+    # spark at the end of the fuse
+    sx, sy = body_cx + 12 * SS, body_cy - r - 12 * SS
+    for angle in range(0, 360, 45):
+        a = math.radians(angle)
+        length = (5 if angle % 90 == 0 else 3) * SS
+        d.line([(sx, sy), (sx + math.cos(a) * length, sy + math.sin(a) * length)], fill=(255, 230, 90, 255), width=SS)
+    d.ellipse([sx - 2 * SS, sy - 2 * SS, sx + 2 * SS, sy + 2 * SS], fill=(255, 255, 220, 255))
+
+    finish(img, (48, 48), "powerup_bomb.png")
+
+
 make_ship()
 make_flame()
 make_asteroid("asteroid_large.png", 11, 128)
@@ -190,3 +224,4 @@ make_asteroid("asteroid_medium.png", 23, 64)
 make_asteroid("asteroid_small.png", 37, 32)
 make_bullet()
 make_cursor()
+make_powerup_bomb()

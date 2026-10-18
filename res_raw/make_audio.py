@@ -138,6 +138,14 @@ def sfx_thrust():
     save_wav(SFX_DIR / "thrust.wav", s)
 
 
+def sfx_bomb():
+    # rising "pickup" chime followed by a big deep explosion
+    t = t_axis(0.18)
+    chime = square(np.linspace(500, 1600, len(t)), t, duty=0.5) * envelope(len(t), 0.003, 0.05) * 0.4
+    boom = explosion(1.6, 9000, 2.2, 45)
+    save_wav(SFX_DIR / "bomb.wav", np.concatenate([lowpass(chime, 5000), boom]))
+
+
 # ------------------------------------------------------------------ music
 def render_song(bpm, bars, chords, lead_pattern, bass_style, drums, lead_duty, swing=0.0):
     beat = 60.0 / bpm
@@ -255,3 +263,4 @@ sfx_game_over()
 sfx_thrust()
 music_menu()
 music_gameplay()
+sfx_bomb()

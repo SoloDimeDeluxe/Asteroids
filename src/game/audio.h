@@ -8,7 +8,8 @@ namespace ReyesCuadra::audio
 		AsteroidExplosion,
 		ShipExplosion,
 		ButtonClick,
-		GameOver
+		GameOver,
+		Bomb
 	};
 
 	enum class MusicTrack

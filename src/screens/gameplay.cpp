@@ -4,6 +4,7 @@
 
 #include "entities/asteroid.h"
 #include "entities/bullet.h"
+#include "entities/powerup.h"
 #include "entities/ship.h"
 #include "game/audio.h"
 #include "utils/collision.h"
@@ -48,6 +49,11 @@ namespace ReyesCuadra::gameplay
 	// Segundos que se ve la nave destruida antes de mostrar el GAME OVER
 	static constexpr float GAME_OVER_DELAY = 2.0f;
 
+	// Power-up de bomba
+	static constexpr float POWERUP_SPAWN_INTERVAL = 15.0f; // Segundos sin power-up hasta que aparece uno
+	static constexpr float BOMB_FLASH_DURATION = 0.5f;     // Destello blanco al explotar
+	static constexpr float BOMB_FLASH_MAX_OPACITY = 0.8f;
+
 	// Aparicion de asteroides
 	static constexpr int INITIAL_ASTEROIDS = 4;
 	static constexpr float SPAWN_INTERVAL = 5.0f;      // Segundos entre cada asteroide nuevo
@@ -65,6 +71,10 @@ namespace ReyesCuadra::gameplay
 	static bullet::Bullet bullets[bullet::MAX_BULLETS] = {};
 	static asteroid::Asteroid asteroids[asteroid::MAX_ASTEROIDS] = {};
 	static float spawnTimer = 0.0f;
+
+	static powerup::PowerUp bombPowerUp = {};
+	static float powerUpSpawnTimer = 0.0f;
+	static float bombFlashTimeLeft = 0.0f;
 
 	static ui::Button pauseButton = {};
 
@@ -176,6 +186,43 @@ namespace ReyesCuadra::gameplay
 		}
 	}
 
+	// Si no hay power-up en pantalla, cada POWERUP_SPAWN_INTERVAL segundos aparece uno
+	static void UpdatePowerUp()
+	{
+		powerup::Update(bombPowerUp);
+
+		if (bombPowerUp.isActive)
+		{
+			return;
+		}
+
+		powerUpSpawnTimer += GetFrameTime();
+
+		if (powerUpSpawnTimer >= POWERUP_SPAWN_INTERVAL)
+		{
+			powerUpSpawnTimer = 0.0f;
+			powerup::Spawn(bombPowerUp, playerShip.position);
+		}
+	}
+
+	// Si la nave agarra la bomba, destruye todos los asteroides y suma un punto por cada uno
+	static void CheckShipPowerUpCollision()
+	{
+		if (!bombPowerUp.isActive)
+		{
+			return;
+		}
+
+		if (collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
+			bombPowerUp.position, powerup::COLLISION_RADIUS))
+		{
+			bombPowerUp.isActive = false;
+			score += asteroid::DestroyAll(asteroids);
+			bombFlashTimeLeft = BOMB_FLASH_DURATION;
+			audio::PlaySoundEffect(audio::SoundEffect::Bomb);
+		}
+	}
+
 	// Aca va la logica de la partida (nave, asteroides, balas)
 	static void UpdateMatch()
 	{
@@ -207,6 +254,18 @@ namespace ReyesCuadra::gameplay
 		if (!isShipDestroyed)
 		{
 			CheckShipAsteroidCollisions();
+		}
+
+		UpdatePowerUp();
+
+		if (!isShipDestroyed)
+		{
+			CheckShipPowerUpCollision();
+		}
+
+		if (bombFlashTimeLeft > 0.0f)
+		{
+			bombFlashTimeLeft -= GetFrameTime();
 		}
 
 		if (controlsHintTimeLeft > 0.0f)
@@ -257,10 +316,23 @@ namespace ReyesCuadra::gameplay
 			positionY, CONTROLS_HINT_FONT_SIZE, Fade(LIGHTGRAY, opacity));
 	}
 
+	// Destello blanco que se desvanece al explotar la bomba
+	static void DrawBombFlash()
+	{
+		if (bombFlashTimeLeft <= 0.0f)
+		{
+			return;
+		}
+
+		const float opacity = bombFlashTimeLeft / BOMB_FLASH_DURATION * BOMB_FLASH_MAX_OPACITY;
+		DrawRectangle(0, 0, config::SCREEN_WIDTH, config::SCREEN_HEIGHT, Fade(WHITE, opacity));
+	}
+
 	// Aca se dibuja la partida
 	static void DrawMatch()
 	{
 		asteroid::DrawAll(asteroids);
+		powerup::Draw(bombPowerUp);
 		bullet::DrawAll(bullets);
 
 		if (isShipDestroyed)
@@ -272,6 +344,7 @@ namespace ReyesCuadra::gameplay
 			ship::Draw(playerShip);
 		}
 
+		DrawBombFlash();
 		DrawHud();
 		DrawControlsHint();
 	}
@@ -357,6 +430,10 @@ namespace ReyesCuadra::gameplay
 
 		asteroid::InitAll(asteroids);
 		spawnTimer = 0.0f;
+
+		bombPowerUp = powerup::Create();
+		powerUpSpawnTimer = 0.0f;
+		bombFlashTimeLeft = 0.0f;
 
 		for (int i = 0; i < INITIAL_ASTEROIDS; i++)
 		{

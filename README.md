@@ -22,6 +22,7 @@ Todo el juego se maneja con el mouse.
 - La nave, las balas y los asteroides aparecen del lado contrario al salir de la pantalla.
 - Asteroides de 3 tamaños que se dividen al ser destruidos.
 - Colisiones círculo-círculo propias, sin raíz cuadrada.
+- Power-up de bomba que aparece cada tanto y destruye todos los asteroides de la pantalla.
 - 3 vidas, con invulnerabilidad temporal al reaparecer.
 - Puntaje por asteroides destruidos.
 - Movimiento independiente del frame rate.

@@ -38,6 +38,9 @@ namespace ReyesCuadra::asteroid
 	// el mediano en 2 chicos y el chico desaparece
 	void Destroy(Asteroid asteroids[], int index);
 
+	// Destruye todos los asteroides de una (sin dividirlos). Devuelve cuantos habia
+	int DestroyAll(Asteroid asteroids[]);
+
 	int CountActive(const Asteroid asteroids[]);
 
 	void UpdateAll(Asteroid asteroids[]);

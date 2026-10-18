@@ -22,6 +22,9 @@
     <ClCompile Include="src\entities\bullet.cpp">
       <Filter>entities</Filter>
     </ClCompile>
+    <ClCompile Include="src\entities\powerup.cpp">
+      <Filter>entities</Filter>
+    </ClCompile>
     <ClCompile Include="src\entities\ship.cpp">
       <Filter>entities</Filter>
     </ClCompile>
@@ -46,6 +49,9 @@
     <ClCompile Include="src\utils\collision.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\random_utils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
     <ClCompile Include="src\utils\screen_wrap.cpp">
       <Filter>utils</Filter>
     </ClCompile>
@@ -58,6 +64,9 @@
       <Filter>entities</Filter>
     </ClInclude>
     <ClInclude Include="src\entities\bullet.h">
+      <Filter>entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\entities\powerup.h">
       <Filter>entities</Filter>
     </ClInclude>
     <ClInclude Include="src\entities\ship.h">
@@ -88,6 +97,9 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\config.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\random_utils.h">
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\screen_wrap.h">

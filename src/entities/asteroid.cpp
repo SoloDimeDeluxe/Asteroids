@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "utils/config.h"
+#include "utils/random_utils.h"
 #include "utils/screen_wrap.h"
 
 namespace ReyesCuadra::asteroid
@@ -67,15 +68,6 @@ namespace ReyesCuadra::asteroid
 		return smallTexture;
 	}
 
-	// Numero al azar entre min y max (con decimales)
-	static float RandomFloat(float min, float max)
-	{
-		constexpr int PRECISION = 10000;
-		const float randomPercent = static_cast<float>(GetRandomValue(0, PRECISION)) / static_cast<float>(PRECISION);
-
-		return min + (max - min) * randomPercent;
-	}
-
 	static float GetRadius(Size size)
 	{
 		switch (size)
@@ -96,11 +88,11 @@ namespace ReyesCuadra::asteroid
 		switch (size)
 		{
 		case Size::Large:
-			return RandomFloat(LARGE_MIN_SPEED, LARGE_MAX_SPEED);
+			return random_utils::RandomFloat(LARGE_MIN_SPEED, LARGE_MAX_SPEED);
 		case Size::Medium:
-			return RandomFloat(MEDIUM_MIN_SPEED, MEDIUM_MAX_SPEED);
+			return random_utils::RandomFloat(MEDIUM_MIN_SPEED, MEDIUM_MAX_SPEED);
 		case Size::Small:
-			return RandomFloat(SMALL_MIN_SPEED, SMALL_MAX_SPEED);
+			return random_utils::RandomFloat(SMALL_MIN_SPEED, SMALL_MAX_SPEED);
 		}
 
 		return SMALL_MIN_SPEED;
@@ -121,8 +113,8 @@ namespace ReyesCuadra::asteroid
 				asteroids[i].velocity.y = std::sin(direction) * speed;
 				asteroids[i].size = size;
 				asteroids[i].radius = GetRadius(size);
-				asteroids[i].rotation = RandomFloat(0.0f, FULL_TURN_DEGREES);
-				asteroids[i].rotationSpeed = RandomFloat(-MAX_ROTATION_SPEED, MAX_ROTATION_SPEED);
+				asteroids[i].rotation = random_utils::RandomFloat(0.0f, FULL_TURN_DEGREES);
+				asteroids[i].rotationSpeed = random_utils::RandomFloat(-MAX_ROTATION_SPEED, MAX_ROTATION_SPEED);
 				asteroids[i].isActive = true;
 
 				return;
@@ -168,22 +160,22 @@ namespace ReyesCuadra::asteroid
 		switch (edge)
 		{
 		case ScreenEdge::Top:
-			position = { RandomFloat(0.0f, screenWidth), -outside };
+			position = { random_utils::RandomFloat(0.0f, screenWidth), -outside };
 			break;
 		case ScreenEdge::Right:
-			position = { screenWidth + outside, RandomFloat(0.0f, screenHeight) };
+			position = { screenWidth + outside, random_utils::RandomFloat(0.0f, screenHeight) };
 			break;
 		case ScreenEdge::Bottom:
-			position = { RandomFloat(0.0f, screenWidth), screenHeight + outside };
+			position = { random_utils::RandomFloat(0.0f, screenWidth), screenHeight + outside };
 			break;
 		case ScreenEdge::Left:
-			position = { -outside, RandomFloat(0.0f, screenHeight) };
+			position = { -outside, random_utils::RandomFloat(0.0f, screenHeight) };
 			break;
 		}
 
 		// Apunta a un punto al azar de la zona central
-		const float targetX = RandomFloat(TARGET_AREA_MARGIN, screenWidth - TARGET_AREA_MARGIN);
-		const float targetY = RandomFloat(TARGET_AREA_MARGIN, screenHeight - TARGET_AREA_MARGIN);
+		const float targetX = random_utils::RandomFloat(TARGET_AREA_MARGIN, screenWidth - TARGET_AREA_MARGIN);
+		const float targetY = random_utils::RandomFloat(TARGET_AREA_MARGIN, screenHeight - TARGET_AREA_MARGIN);
 		const float direction = std::atan2(targetY - position.y, targetX - position.x);
 
 		Spawn(asteroids, position, direction, Size::Large);
@@ -210,6 +202,22 @@ namespace ReyesCuadra::asteroid
 		// Un pedazo para cada lado
 		Spawn(asteroids, destroyed.position, direction + SPLIT_ANGLE, smallerSize);
 		Spawn(asteroids, destroyed.position, direction - SPLIT_ANGLE, smallerSize);
+	}
+
+	int DestroyAll(Asteroid asteroids[])
+	{
+		int destroyedCount = 0;
+
+		for (int i = 0; i < MAX_ASTEROIDS; i++)
+		{
+			if (asteroids[i].isActive)
+			{
+				asteroids[i].isActive = false;
+				destroyedCount++;
+			}
+		}
+
+		return destroyedCount;
 	}
 
 	int CountActive(const Asteroid asteroids[])

@@ -14,6 +14,7 @@ namespace ReyesCuadra::audio
 	static Sound buttonClickSound = {};
 	static Sound gameOverSound = {};
 	static Sound thrustSound = {};
+	static Sound bombSound = {};
 
 	static Music menuMusic = {};
 	static Music gameplayMusic = {};
@@ -61,6 +62,7 @@ namespace ReyesCuadra::audio
 		buttonClickSound = LoadSoundWithVolume("res/sounds/button_click.wav", SOUND_VOLUME);
 		gameOverSound = LoadSoundWithVolume("res/sounds/game_over.wav", SOUND_VOLUME);
 		thrustSound = LoadSoundWithVolume("res/sounds/thrust.wav", THRUST_VOLUME);
+		bombSound = LoadSoundWithVolume("res/sounds/bomb.wav", SOUND_VOLUME);
 
 		menuMusic = LoadLoopingMusic("res/music/menu_music.ogg");
 		gameplayMusic = LoadLoopingMusic("res/music/gameplay_music.ogg");
@@ -84,6 +86,9 @@ namespace ReyesCuadra::audio
 			break;
 		case SoundEffect::GameOver:
 			PlaySound(gameOverSound);
+			break;
+		case SoundEffect::Bomb:
+			PlaySound(bombSound);
 			break;
 		}
 	}
@@ -139,6 +144,7 @@ namespace ReyesCuadra::audio
 		UnloadSound(buttonClickSound);
 		UnloadSound(gameOverSound);
 		UnloadSound(thrustSound);
+		UnloadSound(bombSound);
 
 		UnloadMusicStream(menuMusic);
 		UnloadMusicStream(gameplayMusic);

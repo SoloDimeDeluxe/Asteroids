@@ -16,17 +16,17 @@ namespace ReyesCuadra::instructions
 	};
 
 	static constexpr int TITLE_FONT_SIZE = 50;
-	static constexpr int TITLE_POSITION_Y = 50;
+	static constexpr int TITLE_POSITION_Y = 40;
 
 	static constexpr int SECTION_FONT_SIZE = 28;
 	static constexpr int TEXT_FONT_SIZE = 22;
-	static constexpr int FIRST_LINE_POSITION_Y = 140;
-	static constexpr int LINE_SPACING = 34;
+	static constexpr int FIRST_LINE_POSITION_Y = 120;
+	static constexpr int LINE_SPACING = 30;
 	static constexpr int SECTION_EXTRA_SPACING = 16; // Espacio de mas antes de cada seccion
 
 	static constexpr float BACK_BUTTON_WIDTH = 220.0f;
 	static constexpr float BACK_BUTTON_HEIGHT = 60.0f;
-	static constexpr float BACK_BUTTON_POSITION_Y = 670.0f;
+	static constexpr float BACK_BUTTON_POSITION_Y = 685.0f;
 
 	static const Color SECTION_COLOR = SKYBLUE;
 	static const Color TEXT_COLOR = LIGHTGRAY;
@@ -44,6 +44,10 @@ namespace ReyesCuadra::instructions
 		{ "Mantener clic derecho: acelerar", false },
 		{ "Clic izquierdo o barra espaciadora: disparar", false },
 		{ "La nave no frena sola: para frenar, acelerar hacia el otro lado.", false },
+
+		{ "BOMBA", true },
+		{ "Cada tanto aparece una bomba: si la nave la toca,", false },
+		{ "destruye todos los asteroides de la pantalla. Dura pocos segundos.", false },
 
 		{ "PAUSA", true },
 		{ "Boton PAUSA (arriba a la derecha), P o ESC: pausar el juego.", false },

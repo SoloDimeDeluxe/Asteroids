@@ -4,6 +4,7 @@
 
 #include "entities/asteroid.h"
 #include "entities/bullet.h"
+#include "entities/powerup.h"
 #include "entities/ship.h"
 #include "game/audio.h"
 #include "game/screen.h"
@@ -66,6 +67,7 @@ namespace ReyesCuadra::game
 		ship::LoadTextures();
 		asteroid::LoadTextures();
 		bullet::LoadTexture();
+		powerup::LoadTexture();
 		ui::LoadCursorTexture();
 
 		// Se usa la mira propia en vez del cursor del sistema
@@ -140,6 +142,7 @@ namespace ReyesCuadra::game
 		ship::UnloadTextures();
 		asteroid::UnloadTextures();
 		bullet::UnloadTexture();
+		powerup::UnloadTexture();
 		ui::UnloadCursorTexture();
 
 		audio::Close();
