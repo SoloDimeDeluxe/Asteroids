@@ -60,22 +60,30 @@ def make_ship():
 
 # ---------------------------------------------------------------- engine flame (points left)
 def make_flame():
-    W, H = 32 * SS, 16 * SS
-    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    layers = [
-        ((255, 90, 20, 200), 1.00, 1.00),
-        ((255, 170, 40, 230), 0.75, 0.70),
-        ((255, 240, 160, 255), 0.45, 0.40),
-    ]
-    for color, length, thick in layers:
-        d = ImageDraw.Draw(img)
-        tip_x = W - W * length
-        half = (H / 2) * thick
-        pts = [(W, H / 2 - half), (W, H / 2 + half), (tip_x, H / 2)]
-        d.polygon(pts, fill=color)
-        d.ellipse([W - half * 1.2, H / 2 - half, W + half * 0.8, H / 2 + half], fill=color)
-    img = img.filter(ImageFilter.GaussianBlur(SS * 0.8))
-    finish(img, (32, 16), "ship_flame.png")
+    # sprite sheet: 4 frames side by side (32x16 each), the flame flickers between them
+    frame_w, frame_h = 32 * SS, 16 * SS
+    frames = 4
+    sheet = Image.new("RGBA", (frame_w * frames, frame_h), (0, 0, 0, 0))
+    # (length, thickness) changes per frame so the flame "breathes"
+    frame_shapes = [(1.00, 1.00), (0.80, 0.90), (0.92, 1.05), (0.70, 0.85)]
+    for index, (length_scale, thick_scale) in enumerate(frame_shapes):
+        img = Image.new("RGBA", (frame_w, frame_h), (0, 0, 0, 0))
+        layers = [
+            ((255, 90, 20, 200), 1.00, 1.00),
+            ((255, 170, 40, 230), 0.75, 0.70),
+            ((255, 240, 160, 255), 0.45, 0.40),
+        ]
+        W, H = frame_w, frame_h
+        for color, length, thick in layers:
+            d = ImageDraw.Draw(img)
+            tip_x = W - W * length * length_scale
+            half = (H / 2) * thick * thick_scale * 0.9
+            pts = [(W, H / 2 - half), (W, H / 2 + half), (tip_x, H / 2)]
+            d.polygon(pts, fill=color)
+            d.ellipse([W - half * 1.2, H / 2 - half, W + half * 0.8, H / 2 + half], fill=color)
+        img = img.filter(ImageFilter.GaussianBlur(SS * 0.8))
+        sheet.paste(img, (index * frame_w, 0))
+    finish(sheet, (32 * frames, 16), "ship_flame.png")
 
 
 # ---------------------------------------------------------------- asteroids
@@ -259,6 +267,76 @@ def make_enemy_bullet():
     finish(img, (16, 16), "enemy_bullet.png")
 
 
+# ---------------------------------------------------------------- explosion (8-frame animation)
+def make_explosion():
+    frame = 64 * SS
+    frames = 8
+    rng = random.Random(99)
+    sheet = Image.new("RGBA", (frame * frames, frame), (0, 0, 0, 0))
+    c = frame / 2
+
+    # fixed random layout shared by all frames, so the animation moves smoothly
+    puffs = [(rng.uniform(0, 2 * math.pi), rng.uniform(0.0, 1.0), rng.uniform(0.55, 1.0)) for _ in range(9)]
+    sparks = [(rng.uniform(0, 2 * math.pi), rng.uniform(0.7, 1.0)) for _ in range(12)]
+    debris = [(rng.uniform(0, 2 * math.pi), rng.uniform(0.6, 1.0)) for _ in range(8)]
+
+    fire_colors = [(255, 255, 235), (255, 235, 130), (255, 160, 45), (225, 70, 30), (110, 60, 50)]
+
+    def fire_color(t):
+        pos = min(t * (len(fire_colors) - 1), len(fire_colors) - 1.001)
+        i = int(pos)
+        return lerp(fire_colors[i], fire_colors[i + 1], pos - i)
+
+    for index in range(frames):
+        t = index / (frames - 1)              # 0 = start, 1 = end
+        fade = 1.0 - t
+        img = Image.new("RGBA", (frame, frame), (0, 0, 0, 0))
+        d = ImageDraw.Draw(img)
+
+        # smoke puffs (late frames): grey clouds that spread and fade
+        if t > 0.3:
+            smoke_t = (t - 0.3) / 0.7
+            for angle, offset, size in puffs:
+                dist = frame * (0.10 + 0.22 * smoke_t) * offset
+                x, y = c + math.cos(angle) * dist, c + math.sin(angle) * dist
+                r = frame * 0.13 * size * (0.8 + 0.6 * smoke_t)
+                d.ellipse([x - r, y - r, x + r, y + r], fill=(80, 72, 70, int(170 * (1 - smoke_t))))
+
+        # rock debris flying away (under the fire, so it only shows once it leaves the fireball)
+        for angle, speed in debris:
+            dist = frame * 0.46 * t * speed
+            x, y = c + math.cos(angle) * dist, c + math.sin(angle) * dist
+            r = frame * 0.03 * (1.1 - t * 0.6)
+            d.ellipse([x - r, y - r, x + r, y + r], fill=(150, 130, 110, int(255 * fade)))
+
+        # fireball made of puffs: grows fast, then shrinks and darkens
+        growth = math.sin(min(1.0, t * 1.6) * math.pi / 2)
+        shrink = 1.0 - max(0.0, t - 0.5) * 1.2
+        for angle, offset, size in puffs:
+            dist = frame * 0.15 * growth * offset
+            x, y = c + math.cos(angle) * dist, c + math.sin(angle) * dist
+            r = frame * 0.19 * size * (0.4 + 0.6 * growth) * max(0.15, shrink)
+            col = fire_color(min(1.0, t * 1.1 + offset * 0.15))
+            d.ellipse([x - r, y - r, x + r, y + r], fill=col + (int(255 * fade ** 0.6),))
+
+        # hot white core in the first frames
+        if t < 0.45:
+            core_r = frame * 0.12 * (1 - t / 0.45)
+            d.ellipse([c - core_r, c - core_r, c + core_r, c + core_r], fill=(255, 255, 245, 255))
+
+        # sparks: bright streaks shooting outwards (early frames)
+        if t < 0.6:
+            for angle, speed in sparks:
+                inner = frame * (0.08 + 0.55 * t) * speed
+                outer = inner + frame * 0.10 * (1 - t)
+                d.line([(c + math.cos(angle) * inner, c + math.sin(angle) * inner),
+                        (c + math.cos(angle) * outer, c + math.sin(angle) * outer)],
+                       fill=(255, 230, 140, int(255 * (1 - t / 0.6))), width=int(1.6 * SS))
+
+        img = img.filter(ImageFilter.GaussianBlur(SS * 0.6))
+        sheet.paste(img, (index * frame, 0))
+    finish(sheet, (64 * frames, 64), "explosion.png")
+
 make_ship()
 make_flame()
 make_asteroid("asteroid_large.png", 11, 128)
@@ -269,3 +347,4 @@ make_cursor()
 make_powerup_bomb()
 make_ufo()
 make_enemy_bullet()
+make_explosion()

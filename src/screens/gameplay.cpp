@@ -4,6 +4,7 @@
 
 #include "entities/asteroid.h"
 #include "entities/bullet.h"
+#include "entities/explosion.h"
 #include "entities/powerup.h"
 #include "entities/ship.h"
 #include "entities/ufo.h"
@@ -61,6 +62,11 @@ namespace ReyesCuadra::gameplay
 	static constexpr float UFO_SPAWN_INTERVAL = 20.0f;     // Segundos sin OVNI hasta que aparece uno
 	static constexpr int UFO_POINTS = 5;                   // Puntos por destruir un OVNI (un asteroide da 1)
 
+	// Tamaño de las explosiones
+	static constexpr float ASTEROID_EXPLOSION_SCALE = 2.4f; // Respecto del radio del asteroide
+	static constexpr float UFO_EXPLOSION_SIZE = 90.0f;
+	static constexpr float SHIP_EXPLOSION_SIZE = 100.0f;
+
 	// Aparicion de asteroides
 	static constexpr int INITIAL_ASTEROIDS = 4;
 	static constexpr float SPAWN_INTERVAL = 5.0f;      // Segundos entre cada asteroide nuevo
@@ -85,6 +91,8 @@ namespace ReyesCuadra::gameplay
 	static float powerUpSpawnTimer = 0.0f;
 	static float bombFlashTimeLeft = 0.0f;
 
+	static explosion::Explosion explosions[explosion::MAX_EXPLOSIONS] = {};
+
 	static ufo::Ufo enemyUfo = {};
 	static float ufoSpawnTimer = 0.0f;
 
@@ -102,6 +110,20 @@ namespace ReyesCuadra::gameplay
 	static int GetScore()
 	{
 		return asteroidsDestroyed + ufosDestroyed * UFO_POINTS;
+	}
+
+	// Explosion del tamaño del asteroide, en su posicion
+	static void ExplodeAsteroid(int asteroidIndex)
+	{
+		const float size = asteroids[asteroidIndex].radius * ASTEROID_EXPLOSION_SCALE;
+		explosion::Spawn(explosions, asteroids[asteroidIndex].position, size);
+	}
+
+	// Explosion en la posicion del OVNI, que deja de estar en pantalla
+	static void ExplodeUfo()
+	{
+		explosion::Spawn(explosions, enemyUfo.position, UFO_EXPLOSION_SIZE);
+		enemyUfo.isActive = false;
 	}
 
 	// Clic izquierdo (o espacio) dispara.
@@ -151,6 +173,7 @@ namespace ReyesCuadra::gameplay
 					asteroids[asteroidIndex].position, asteroids[asteroidIndex].radius))
 				{
 					playerBullets[bulletIndex].isActive = false;
+					ExplodeAsteroid(asteroidIndex);
 					asteroid::Destroy(asteroids, asteroidIndex);
 					audio::PlaySoundEffect(audio::SoundEffect::AsteroidExplosion);
 					asteroidsDestroyed++;
@@ -165,6 +188,7 @@ namespace ReyesCuadra::gameplay
 	// Pierde una vida: reaparece en el centro, o si era la ultima, la nave queda destruida
 	static void LoseLife()
 	{
+		explosion::Spawn(explosions, playerShip.position, SHIP_EXPLOSION_SIZE);
 		audio::PlaySoundEffect(audio::SoundEffect::ShipExplosion);
 		lives--;
 
@@ -199,6 +223,7 @@ namespace ReyesCuadra::gameplay
 				asteroids[asteroidIndex].position, asteroids[asteroidIndex].radius))
 			{
 				// El asteroide tambien se rompe con el choque (pero no suma puntos)
+				ExplodeAsteroid(asteroidIndex);
 				asteroid::Destroy(asteroids, asteroidIndex);
 				LoseLife();
 
@@ -255,7 +280,7 @@ namespace ReyesCuadra::gameplay
 					enemyUfo.position, ufo::COLLISION_RADIUS))
 			{
 				playerBullets[bulletIndex].isActive = false;
-				enemyUfo.isActive = false;
+				ExplodeUfo();
 				ufosDestroyed++;
 				audio::PlaySoundEffect(audio::SoundEffect::AsteroidExplosion);
 				return;
@@ -276,7 +301,7 @@ namespace ReyesCuadra::gameplay
 			collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
 				enemyUfo.position, ufo::COLLISION_RADIUS))
 		{
-			enemyUfo.isActive = false;
+			ExplodeUfo();
 			LoseLife();
 			return;
 		}
@@ -327,11 +352,21 @@ namespace ReyesCuadra::gameplay
 			bombPowerUp.position, powerup::COLLISION_RADIUS))
 		{
 			bombPowerUp.isActive = false;
+
+			// Todos los asteroides explotan a la vez
+			for (int asteroidIndex = 0; asteroidIndex < asteroid::MAX_ASTEROIDS; asteroidIndex++)
+			{
+				if (asteroids[asteroidIndex].isActive)
+				{
+					ExplodeAsteroid(asteroidIndex);
+				}
+			}
+
 			asteroidsDestroyed += asteroid::DestroyAll(asteroids);
 
 			if (enemyUfo.isActive)
 			{
-				enemyUfo.isActive = false;
+				ExplodeUfo();
 				ufosDestroyed++;
 			}
 
@@ -389,6 +424,8 @@ namespace ReyesCuadra::gameplay
 		{
 			CheckShipPowerUpCollision();
 		}
+
+		explosion::UpdateAll(explosions);
 
 		if (bombFlashTimeLeft > 0.0f)
 		{
@@ -473,6 +510,7 @@ namespace ReyesCuadra::gameplay
 			ship::Draw(playerShip);
 		}
 
+		explosion::DrawAll(explosions);
 		DrawBombFlash();
 		DrawHud();
 		DrawControlsHint();
@@ -560,6 +598,7 @@ namespace ReyesCuadra::gameplay
 		ship::Respawn(playerShip);
 		bullet::InitAll(playerBullets);
 		bullet::InitAll(enemyBullets);
+		explosion::InitAll(explosions);
 
 		asteroid::InitAll(asteroids);
 		spawnTimer = 0.0f;

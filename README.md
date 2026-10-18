@@ -27,6 +27,7 @@ Todo el juego se maneja con el mouse.
 - 3 vidas, con invulnerabilidad temporal al reaparecer.
 - Puntaje: 1 punto por asteroide y 5 por OVNI destruido.
 - Movimiento independiente del frame rate.
+- Animaciones: fuego del motor al acelerar y explosiones al destruir asteroides, el OVNI o la nave.
 - Sprites, música y efectos de sonido originales.
 
 ## Descargar

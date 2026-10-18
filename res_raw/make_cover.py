@@ -57,7 +57,8 @@ large = load("asteroid_large.png")
 medium = load("asteroid_medium.png")
 small = load("asteroid_small.png")
 ship = load("ship.png")
-flame = load("ship_flame.png")
+flame_sheet = load("ship_flame.png")
+flame = flame_sheet.crop((0, 0, flame_sheet.height * 2, flame_sheet.height))  # first frame of the sheet
 bullet = load("bullet.png")
 
 for sprite, center, size, angle in [

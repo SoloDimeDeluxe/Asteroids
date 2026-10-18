@@ -6,7 +6,7 @@ Todos los sprites, efectos de sonido y músicas son originales: se generan por c
 
 | Script | Genera |
 |---|---|
-| `make_sprites.py` | `res/textures/` (nave, fuego del motor, asteroides de 3 tamaños, balas, mira, bomba y OVNI) |
+| `make_sprites.py` | `res/textures/` (nave, fuego del motor, asteroides de 3 tamaños, balas, mira, bomba, OVNI y las hojas de animación del fuego y la explosión) |
 | `make_audio.py` | `res/sounds/` (9 efectos `.wav`) y `res/music/` (2 músicas `.ogg`) |
 | `make_cover.py` | `res_raw/itch_cover.png` (portada de 630x500 para itch.io, armada con los sprites del juego; no se versiona porque se regenera con el script) |
 

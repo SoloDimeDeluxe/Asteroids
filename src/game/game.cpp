@@ -4,6 +4,7 @@
 
 #include "entities/asteroid.h"
 #include "entities/bullet.h"
+#include "entities/explosion.h"
 #include "entities/powerup.h"
 #include "entities/ship.h"
 #include "entities/ufo.h"
@@ -70,6 +71,7 @@ namespace ReyesCuadra::game
 		asteroid::LoadTextures();
 		bullet::LoadTextures();
 		ufo::LoadTexture();
+		explosion::LoadTexture();
 		powerup::LoadTexture();
 		ui::LoadCursorTexture();
 
@@ -146,6 +148,7 @@ namespace ReyesCuadra::game
 		asteroid::UnloadTextures();
 		bullet::UnloadTextures();
 		ufo::UnloadTexture();
+		explosion::UnloadTexture();
 		powerup::UnloadTexture();
 		ui::UnloadCursorTexture();
 

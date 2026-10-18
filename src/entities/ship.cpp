@@ -16,6 +16,10 @@ namespace ReyesCuadra::ship
 	static constexpr float FLAME_DRAW_WIDTH = 24.0f;
 	static constexpr float FLAME_DRAW_HEIGHT = 12.0f;
 
+	// El fuego es una hoja de sprites con cuadros uno al lado del otro
+	static constexpr int FLAME_FRAME_COUNT = 4;
+	static constexpr float FLAME_FRAME_TIME = 0.05f;    // Segundos por cuadro
+
 	// Medidas desde el centro de la nave (segun el dibujo del sprite)
 	static constexpr float NOSE_LENGTH = 22.0f;       // Del centro a la punta (de ahi salen las balas)
 	static constexpr float TAIL_LENGTH = 17.0f;       // Del centro al motor (ahi empieza el fuego)
@@ -34,12 +38,17 @@ namespace ReyesCuadra::ship
 	static Texture2D shipTexture = {};
 	static Texture2D flameTexture = {};
 
-	// Dibuja una textura entera, rotada alrededor de "origin" y con ese punto ubicado en "position".
+	// Rectangulo con la imagen entera (para texturas de un solo cuadro)
+	static Rectangle GetFullSource(const Texture2D& texture)
+	{
+		return { 0.0f, 0.0f, static_cast<float>(texture.width), static_cast<float>(texture.height) };
+	}
+
+	// Dibuja la parte "source" de una textura, rotada alrededor de "origin" y con ese punto ubicado en "position".
 	// "tint" tiñe la imagen (WHITE = colores originales)
-	static void DrawRotatedTexture(const Texture2D& texture, Vector2 position, float width, float height,
+	static void DrawRotatedTexture(const Texture2D& texture, Rectangle source, Vector2 position, float width, float height,
 		Vector2 origin, float rotationRadians, Color tint)
 	{
-		const Rectangle source = { 0.0f, 0.0f, static_cast<float>(texture.width), static_cast<float>(texture.height) };
 		const Rectangle destination = { position.x, position.y, width, height };
 
 		// DrawTexturePro usa grados, nuestra rotacion esta en radianes
@@ -109,6 +118,7 @@ namespace ReyesCuadra::ship
 		ship.velocity = { 0.0f, 0.0f };
 		ship.rotation = 0.0f;
 		ship.isAccelerating = false;
+		ship.flameAnimationTime = 0.0f;
 		ship.invulnerableTimeLeft = 0.0f;
 
 		return ship;
@@ -127,6 +137,7 @@ namespace ReyesCuadra::ship
 		if (ship.isAccelerating)
 		{
 			Accelerate(ship, deltaTime);
+			ship.flameAnimationTime += deltaTime;
 		}
 
 		// Gravedad cero: nunca frena sola, sigue con la misma velocidad
@@ -161,20 +172,25 @@ namespace ReyesCuadra::ship
 		// asi gira junto con ella y siempre queda pegado al motor.
 		if (ship.isAccelerating)
 		{
+			// Cuadro de la animacion segun el tiempo acelerando (vuelve a empezar al terminar)
+			const int frame = static_cast<int>(ship.flameAnimationTime / FLAME_FRAME_TIME) % FLAME_FRAME_COUNT;
+			const float frameWidth = static_cast<float>(flameTexture.width) / static_cast<float>(FLAME_FRAME_COUNT);
+			const Rectangle flameSource = { frameWidth * static_cast<float>(frame), 0.0f, frameWidth, static_cast<float>(flameTexture.height) };
+
 			const Vector2 flameOrigin = { TAIL_LENGTH + FLAME_DRAW_WIDTH, FLAME_DRAW_HEIGHT / 2.0f };
-			DrawRotatedTexture(flameTexture, ship.position, FLAME_DRAW_WIDTH, FLAME_DRAW_HEIGHT, flameOrigin, ship.rotation, WHITE);
+			DrawRotatedTexture(flameTexture, flameSource, ship.position, FLAME_DRAW_WIDTH, FLAME_DRAW_HEIGHT, flameOrigin, ship.rotation, WHITE);
 		}
 
 		// Nave: pivote en el centro del sprite (como el ejemplo de DrawRectanglePro)
 		const Vector2 shipOrigin = { SHIP_DRAW_SIZE / 2.0f, SHIP_DRAW_SIZE / 2.0f };
-		DrawRotatedTexture(shipTexture, ship.position, SHIP_DRAW_SIZE, SHIP_DRAW_SIZE, shipOrigin, ship.rotation, WHITE);
+		DrawRotatedTexture(shipTexture, GetFullSource(shipTexture), ship.position, SHIP_DRAW_SIZE, SHIP_DRAW_SIZE, shipOrigin, ship.rotation, WHITE);
 	}
 
 	void DrawDestroyed(const Ship& ship)
 	{
 		// Sin fuego ni parpadeo, solo la nave teñida de rojo
 		const Vector2 shipOrigin = { SHIP_DRAW_SIZE / 2.0f, SHIP_DRAW_SIZE / 2.0f };
-		DrawRotatedTexture(shipTexture, ship.position, SHIP_DRAW_SIZE, SHIP_DRAW_SIZE, shipOrigin, ship.rotation, DESTROYED_COLOR);
+		DrawRotatedTexture(shipTexture, GetFullSource(shipTexture), ship.position, SHIP_DRAW_SIZE, SHIP_DRAW_SIZE, shipOrigin, ship.rotation, DESTROYED_COLOR);
 	}
 
 	Vector2 GetNosePosition(const Ship& ship)

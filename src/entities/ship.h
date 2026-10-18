@@ -13,6 +13,7 @@ namespace ReyesCuadra::ship
 		Vector2 velocity;     // En pixeles por segundo
 		float rotation;       // En radianes, 0 = mirando a la derecha
 		bool isAccelerating;  // Para dibujar el fuego del motor
+		float flameAnimationTime; // Segundos acelerando (elige el cuadro del fuego)
 		float invulnerableTimeLeft; // Segundos que le quedan sin poder chocar
 	};
 

@@ -111,6 +111,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\entities\asteroid.cpp" />
     <ClCompile Include="src\entities\bullet.cpp" />
+    <ClCompile Include="src\entities\explosion.cpp" />
     <ClCompile Include="src\entities\powerup.cpp" />
     <ClCompile Include="src\entities\ship.cpp" />
     <ClCompile Include="src\entities\ufo.cpp" />
@@ -128,6 +129,7 @@
   <ItemGroup>
     <ClInclude Include="src\entities\asteroid.h" />
     <ClInclude Include="src\entities\bullet.h" />
+    <ClInclude Include="src\entities\explosion.h" />
     <ClInclude Include="src\entities\powerup.h" />
     <ClInclude Include="src\entities\ship.h" />
     <ClInclude Include="src\entities\ufo.h" />
