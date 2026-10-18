@@ -7,6 +7,7 @@ namespace ReyesCuadra::game
 	{
 		Menu,
 		Gameplay,
+		Instructions,
 		Credits,
 		Exit
 	};

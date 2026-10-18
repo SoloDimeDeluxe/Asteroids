@@ -9,6 +9,7 @@
 #include "game/screen.h"
 #include "screens/credits.h"
 #include "screens/gameplay.h"
+#include "screens/instructions.h"
 #include "screens/menu.h"
 #include "utils/config.h"
 #include "utils/ui.h"
@@ -34,6 +35,10 @@ namespace ReyesCuadra::game
 		case Screen::Gameplay:
 			gameplay::Init();
 			audio::PlayMusic(audio::MusicTrack::Gameplay);
+			break;
+		case Screen::Instructions:
+			instructions::Init();
+			audio::PlayMusic(audio::MusicTrack::Menu);
 			break;
 		case Screen::Credits:
 			credits::Init();
@@ -84,6 +89,9 @@ namespace ReyesCuadra::game
 		case Screen::Gameplay:
 			nextScreen = gameplay::Update();
 			break;
+		case Screen::Instructions:
+			nextScreen = instructions::Update();
+			break;
 		case Screen::Credits:
 			nextScreen = credits::Update();
 			break;
@@ -110,6 +118,9 @@ namespace ReyesCuadra::game
 			break;
 		case Screen::Gameplay:
 			gameplay::Draw();
+			break;
+		case Screen::Instructions:
+			instructions::Draw();
 			break;
 		case Screen::Credits:
 			credits::Draw();

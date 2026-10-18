@@ -37,6 +37,9 @@
     <ClCompile Include="src\screens\gameplay.cpp">
       <Filter>screens</Filter>
     </ClCompile>
+    <ClCompile Include="src\screens\instructions.cpp">
+      <Filter>screens</Filter>
+    </ClCompile>
     <ClCompile Include="src\screens\menu.cpp">
       <Filter>screens</Filter>
     </ClCompile>
@@ -73,6 +76,9 @@
       <Filter>screens</Filter>
     </ClInclude>
     <ClInclude Include="src\screens\gameplay.h">
+      <Filter>screens</Filter>
+    </ClInclude>
+    <ClInclude Include="src\screens\instructions.h">
       <Filter>screens</Filter>
     </ClInclude>
     <ClInclude Include="src\screens\menu.h">
