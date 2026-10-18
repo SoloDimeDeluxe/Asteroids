@@ -38,7 +38,7 @@ namespace ReyesCuadra::bullet
 		}
 	}
 
-	void Fire(Bullet bullets[], Vector2 position, float rotation)
+	bool Fire(Bullet bullets[], Vector2 position, float rotation)
 	{
 		// Busca el primer lugar libre
 		for (int i = 0; i < MAX_BULLETS; i++)
@@ -54,11 +54,12 @@ namespace ReyesCuadra::bullet
 				bullets[i].timeLeft = LIFE_TIME;
 				bullets[i].isActive = true;
 
-				return;
+				return true;
 			}
 		}
 
 		// Si no hay lugar libre, no dispara
+		return false;
 	}
 
 	void UpdateAll(Bullet bullets[])

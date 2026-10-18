@@ -5,6 +5,7 @@
 #include "entities/asteroid.h"
 #include "entities/bullet.h"
 #include "entities/ship.h"
+#include "game/audio.h"
 #include "game/screen.h"
 #include "screens/credits.h"
 #include "screens/gameplay.h"
@@ -24,16 +25,22 @@ namespace ReyesCuadra::game
 		{
 			currentScreen = newScreen;
 
+			// Al salir del gameplay el motor deja de sonar
+			audio::UpdateThrust(false);
+
 			switch (currentScreen)
 			{
 			case Screen::Menu:
 				menu::Init();
+				audio::PlayMusic(audio::MusicTrack::Menu);
 				break;
 			case Screen::Gameplay:
 				gameplay::Init();
+				audio::PlayMusic(audio::MusicTrack::Gameplay);
 				break;
 			case Screen::Credits:
 				credits::Init();
+				audio::PlayMusic(audio::MusicTrack::Menu);
 				break;
 			case Screen::Exit:
 				break;
@@ -52,6 +59,8 @@ namespace ReyesCuadra::game
 			// asi funciona igual desde Visual Studio o abriendo el .exe suelto
 			ChangeDirectory(GetApplicationDirectory());
 
+			audio::Init();
+
 			ship::LoadTextures();
 			asteroid::LoadTextures();
 			bullet::LoadTexture();
@@ -66,6 +75,8 @@ namespace ReyesCuadra::game
 		// Actualiza la pantalla activa
 		void Update()
 		{
+			audio::UpdateMusic();
+
 			Screen nextScreen = currentScreen;
 
 			switch (currentScreen)
@@ -122,6 +133,8 @@ namespace ReyesCuadra::game
 			asteroid::UnloadTextures();
 			bullet::UnloadTexture();
 			ui::UnloadCursorTexture();
+
+			audio::Close();
 
 			CloseWindow();
 		}

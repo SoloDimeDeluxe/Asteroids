@@ -25,8 +25,9 @@ namespace ReyesCuadra::bullet
 	// Deja todas las balas inactivas
 	void InitAll(Bullet bullets[]);
 
-	// Activa una bala libre en esa posicion y direccion (si hay alguna libre)
-	void Fire(Bullet bullets[], Vector2 position, float rotation);
+	// Activa una bala libre en esa posicion y direccion.
+	// Devuelve false si no habia lugar libre (no se disparo)
+	bool Fire(Bullet bullets[], Vector2 position, float rotation);
 
 	void UpdateAll(Bullet bullets[]);
 	void DrawAll(const Bullet bullets[]);

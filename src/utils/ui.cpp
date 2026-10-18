@@ -1,5 +1,6 @@
 #include "utils/ui.h"
 
+#include "game/audio.h"
 #include "utils/config.h"
 
 namespace ReyesCuadra::ui
@@ -45,7 +46,15 @@ namespace ReyesCuadra::ui
 
 	bool IsButtonClicked(const Button& button)
 	{
-		return IsButtonHovered(button) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
+		const bool isClicked = IsButtonHovered(button) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
+
+		// Todos los botones hacen el mismo sonido al apretarlos
+		if (isClicked)
+		{
+			audio::PlaySoundEffect(audio::SoundEffect::ButtonClick);
+		}
+
+		return isClicked;
 	}
 
 	void DrawButton(const Button& button)

@@ -30,6 +30,9 @@
     <ClCompile Include="src\entities\ship.cpp">
       <Filter>src\entities</Filter>
     </ClCompile>
+    <ClCompile Include="src\game\audio.cpp">
+      <Filter>src\game</Filter>
+    </ClCompile>
     <ClCompile Include="src\game\game.cpp">
       <Filter>src\game</Filter>
     </ClCompile>
@@ -61,6 +64,9 @@
     </ClInclude>
     <ClInclude Include="src\entities\ship.h">
       <Filter>src\entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\audio.h">
+      <Filter>src\game</Filter>
     </ClInclude>
     <ClInclude Include="src\game\game.h">
       <Filter>src\game</Filter>

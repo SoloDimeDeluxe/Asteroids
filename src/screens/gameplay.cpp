@@ -5,6 +5,7 @@
 #include "entities/asteroid.h"
 #include "entities/bullet.h"
 #include "entities/ship.h"
+#include "game/audio.h"
 #include "utils/collision.h"
 #include "utils/config.h"
 #include "utils/ui.h"
@@ -110,6 +111,7 @@ namespace ReyesCuadra::gameplay
 					{
 						bullets[bulletIndex].isActive = false;
 						asteroid::Destroy(asteroids, asteroidIndex);
+						audio::PlaySoundEffect(audio::SoundEffect::AsteroidExplosion);
 
 						// Un punto por cada asteroide destruido
 						score++;
@@ -141,6 +143,7 @@ namespace ReyesCuadra::gameplay
 				{
 					// El asteroide tambien se rompe con el choque (pero no suma puntos)
 					asteroid::Destroy(asteroids, asteroidIndex);
+					audio::PlaySoundEffect(audio::SoundEffect::ShipExplosion);
 					lives--;
 
 					if (lives > 0)
@@ -150,6 +153,7 @@ namespace ReyesCuadra::gameplay
 					else
 					{
 						isGameOver = true;
+						audio::PlaySoundEffect(audio::SoundEffect::GameOver);
 					}
 
 					// Un solo choque por frame
@@ -168,9 +172,16 @@ namespace ReyesCuadra::gameplay
 
 				if (IsFirePressed())
 				{
-					bullet::Fire(bullets, ship::GetNosePosition(playerShip), playerShip.rotation);
+					// Solo suena si de verdad salio una bala
+					if (bullet::Fire(bullets, ship::GetNosePosition(playerShip), playerShip.rotation))
+					{
+						audio::PlaySoundEffect(audio::SoundEffect::Shoot);
+					}
 				}
 			}
+
+			// El motor suena solo mientras la nave (viva) acelera
+			audio::UpdateThrust(!isGameOver && playerShip.isAccelerating);
 
 			bullet::UpdateAll(bullets);
 
@@ -319,6 +330,9 @@ namespace ReyesCuadra::gameplay
 		else if (ui::IsButtonClicked(pauseButton) || pauseKeyPressed)
 		{
 			isPaused = true;
+
+			// En pausa el motor no suena
+			audio::UpdateThrust(false);
 		}
 		else
 		{
