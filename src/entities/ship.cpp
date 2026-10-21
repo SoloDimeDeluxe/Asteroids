@@ -194,7 +194,11 @@ Vector2 GetShipNosePosition(const Ship& ship)
 
 void RespawnShip(Ship& ship)
 {
+	const Vector2 lastPosition = ship.position;
+
 	ship = CreateShip();
+
+	ship.position = lastPosition;
 	ship.invulnerableTimeLeft = RESPAWN_INVULNERABLE_TIME;
 }
 

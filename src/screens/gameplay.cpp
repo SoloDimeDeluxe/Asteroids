@@ -593,6 +593,7 @@ void InitGameplay()
 
 	// Arranca en el centro e invulnerable (parpadeando) unos segundos,
 	// para que el jugador se acostumbre a los controles
+	playerShip = CreateShip();
 	RespawnShip(playerShip);
 	InitBullets(playerBullets);
 	InitBullets(enemyBullets);
