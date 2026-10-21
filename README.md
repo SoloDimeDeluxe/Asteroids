@@ -66,4 +66,4 @@ Asteroids/
 - C++ con [raylib](https://www.raylib.com/) 5.5
 - Visual Studio 2026
 - Git y GitHub
-- Claude, de Anthropic ([claude.ai](https://claude.ai)): generación y revisión de código, y creación de los sprites, la música y los efectos de sonido (generados por código, ver `res_raw/`).
+- Claude, de Anthropic ([claude.ai](https://claude.ai)): generación y revisión de código (en la parte de texturas) y creación de los sprites, la música y los efectos de sonido (generados por código, ver `res_raw/`).
