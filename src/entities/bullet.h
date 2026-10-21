@@ -2,43 +2,40 @@
 
 #include "raylib.h"
 
-namespace ReyesCuadra::bullet
+// Cantidad maxima de balas de cada arreglo al mismo tiempo
+const int MAX_BULLETS = 20;
+
+// Radio de cada bala (tambien se usa para las colisiones)
+const float BULLET_RADIUS = 2.5f;
+
+// Quien disparo la bala: cambia velocidad, duracion e imagen
+enum class BulletType
 {
-	// Cantidad maxima de balas de cada arreglo al mismo tiempo
-	constexpr int MAX_BULLETS = 20;
+	Player,
+	Enemy
+};
 
-	// Radio de cada bala (tambien se usa para las colisiones)
-	constexpr float RADIUS = 2.5f;
+struct Bullet
+{
+	Vector2 position;
+	Vector2 velocity;    // En pixeles por segundo
+	float timeLeft;      // Segundos que le quedan antes de desaparecer
+	BulletType type;
+	bool isActive;       // false = lugar libre en el arreglo
+};
 
-	// Quien disparo la bala: cambia velocidad, duracion e imagen
-	enum class BulletType
-	{
-		Player,
-		Enemy
-	};
+// Carga las imagenes de las balas (despues de InitWindow)
+void LoadBulletTextures();
 
-	struct Bullet
-	{
-		Vector2 position;
-		Vector2 velocity;    // En pixeles por segundo
-		float timeLeft;      // Segundos que le quedan antes de desaparecer
-		BulletType type;
-		bool isActive;       // false = lugar libre en el arreglo
-	};
+// Deja todas las balas inactivas
+void InitBullets(Bullet bullets[]);
 
-	// Carga las imagenes de las balas (despues de InitWindow)
-	void LoadTextures();
+// Activa una bala libre en esa posicion y direccion.
+// Devuelve false si no habia lugar libre (no se disparo)
+bool FireBullet(Bullet bullets[], Vector2 position, float rotation, BulletType type);
 
-	// Deja todas las balas inactivas
-	void InitAll(Bullet bullets[]);
+void UpdateBullets(Bullet bullets[]);
+void DrawBullets(const Bullet bullets[]);
 
-	// Activa una bala libre en esa posicion y direccion.
-	// Devuelve false si no habia lugar libre (no se disparo)
-	bool Fire(Bullet bullets[], Vector2 position, float rotation, BulletType type);
-
-	void UpdateAll(Bullet bullets[]);
-	void DrawAll(const Bullet bullets[]);
-
-	// Libera las imagenes (antes de CloseWindow)
-	void UnloadTextures();
-}
+// Libera las imagenes (antes de CloseWindow)
+void UnloadBulletTextures();

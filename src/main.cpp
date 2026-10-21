@@ -1,11 +1,7 @@
 #include "game/game.h"
 
-namespace ReyesCuadra
+int main()
 {
-	// extern "C" para que el linker encuentre main dentro del namespace
-	extern "C" int main()
-	{
-		game::Run();
-		return 0;
-	}
+	RunGame();
+	return 0;
 }

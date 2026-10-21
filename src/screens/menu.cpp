@@ -5,71 +5,68 @@
 #include "utils/config.h"
 #include "utils/ui.h"
 
-namespace ReyesCuadra::menu
+static const int TITLE_FONT_SIZE = 80;
+static const int TITLE_POSITION_Y = 150;
+
+static const float BUTTON_WIDTH = 260.0f;
+static const float BUTTON_HEIGHT = 60.0f;
+static const float FIRST_BUTTON_POSITION_Y = 300.0f;
+static const float BUTTON_SPACING = 85.0f;
+
+static const int VERSION_FONT_SIZE = 20;
+static const int VERSION_MARGIN = 10;
+
+static Button playButton = {};
+static Button instructionsButton = {};
+static Button creditsButton = {};
+static Button exitButton = {};
+
+void InitMenu()
 {
-	static constexpr int TITLE_FONT_SIZE = 80;
-	static constexpr int TITLE_POSITION_Y = 150;
+	playButton = CreateCenteredButton(FIRST_BUTTON_POSITION_Y, BUTTON_WIDTH, BUTTON_HEIGHT, "JUGAR");
+	instructionsButton = CreateCenteredButton(FIRST_BUTTON_POSITION_Y + BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT, "COMO JUGAR");
+	creditsButton = CreateCenteredButton(FIRST_BUTTON_POSITION_Y + BUTTON_SPACING * 2.0f, BUTTON_WIDTH, BUTTON_HEIGHT, "CREDITOS");
+	exitButton = CreateCenteredButton(FIRST_BUTTON_POSITION_Y + BUTTON_SPACING * 3.0f, BUTTON_WIDTH, BUTTON_HEIGHT, "SALIR");
+}
 
-	static constexpr float BUTTON_WIDTH = 260.0f;
-	static constexpr float BUTTON_HEIGHT = 60.0f;
-	static constexpr float FIRST_BUTTON_POSITION_Y = 300.0f;
-	static constexpr float BUTTON_SPACING = 85.0f;
-
-	static constexpr int VERSION_FONT_SIZE = 20;
-	static constexpr int VERSION_MARGIN = 10;
-
-	static ui::Button playButton = {};
-	static ui::Button instructionsButton = {};
-	static ui::Button creditsButton = {};
-	static ui::Button exitButton = {};
-
-	void Init()
+Screen UpdateMenu()
+{
+	if (IsButtonClicked(playButton))
 	{
-		playButton = ui::CreateCenteredButton(FIRST_BUTTON_POSITION_Y, BUTTON_WIDTH, BUTTON_HEIGHT, "JUGAR");
-		instructionsButton = ui::CreateCenteredButton(FIRST_BUTTON_POSITION_Y + BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT, "COMO JUGAR");
-		creditsButton = ui::CreateCenteredButton(FIRST_BUTTON_POSITION_Y + BUTTON_SPACING * 2.0f, BUTTON_WIDTH, BUTTON_HEIGHT, "CREDITOS");
-		exitButton = ui::CreateCenteredButton(FIRST_BUTTON_POSITION_Y + BUTTON_SPACING * 3.0f, BUTTON_WIDTH, BUTTON_HEIGHT, "SALIR");
+		return Screen::Gameplay;
 	}
 
-	game::Screen Update()
+	if (IsButtonClicked(instructionsButton))
 	{
-		if (ui::IsButtonClicked(playButton))
-		{
-			return game::Screen::Gameplay;
-		}
-
-		if (ui::IsButtonClicked(instructionsButton))
-		{
-			return game::Screen::Instructions;
-		}
-
-		if (ui::IsButtonClicked(creditsButton))
-		{
-			return game::Screen::Credits;
-		}
-
-		if (ui::IsButtonClicked(exitButton) || IsKeyPressed(KEY_ESCAPE))
-		{
-			return game::Screen::Exit;
-		}
-
-		return game::Screen::Menu;
+		return Screen::Instructions;
 	}
 
-	void Draw()
+	if (IsButtonClicked(creditsButton))
 	{
-		ui::DrawCenteredText("ASTEROIDS", TITLE_POSITION_Y, TITLE_FONT_SIZE, RAYWHITE);
-
-		ui::DrawButton(playButton);
-		ui::DrawButton(instructionsButton);
-		ui::DrawButton(creditsButton);
-		ui::DrawButton(exitButton);
-
-		// Version abajo a la derecha
-		const int versionWidth = MeasureText(config::GAME_VERSION, VERSION_FONT_SIZE);
-		DrawText(config::GAME_VERSION,
-			config::SCREEN_WIDTH - versionWidth - VERSION_MARGIN,
-			config::SCREEN_HEIGHT - VERSION_FONT_SIZE - VERSION_MARGIN,
-			VERSION_FONT_SIZE, GRAY);
+		return Screen::Credits;
 	}
+
+	if (IsButtonClicked(exitButton) || IsKeyPressed(KEY_ESCAPE))
+	{
+		return Screen::Exit;
+	}
+
+	return Screen::Menu;
+}
+
+void DrawMenu()
+{
+	DrawCenteredText("ASTEROIDS", TITLE_POSITION_Y, TITLE_FONT_SIZE, RAYWHITE);
+
+	DrawButton(playButton);
+	DrawButton(instructionsButton);
+	DrawButton(creditsButton);
+	DrawButton(exitButton);
+
+	// Version abajo a la derecha
+	const int versionWidth = MeasureText(GAME_VERSION, VERSION_FONT_SIZE);
+	DrawText(GAME_VERSION,
+		SCREEN_WIDTH - versionWidth - VERSION_MARGIN,
+		SCREEN_HEIGHT - VERSION_FONT_SIZE - VERSION_MARGIN,
+		VERSION_FONT_SIZE, GRAY);
 }

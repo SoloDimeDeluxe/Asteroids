@@ -13,674 +13,671 @@
 #include "utils/config.h"
 #include "utils/ui.h"
 
-namespace ReyesCuadra::gameplay
+static const int TITLE_FONT_SIZE = 60;
+static const int TITLE_POSITION_Y = 200;
+
+// Boton de pausa (arriba a la derecha)
+static const float PAUSE_BUTTON_WIDTH = 140.0f;
+static const float PAUSE_BUTTON_HEIGHT = 45.0f;
+static const float PAUSE_BUTTON_MARGIN = 15.0f;
+
+// Botones de los menus de pausa y derrota
+static const float MENU_BUTTON_WIDTH = 320.0f;
+static const float MENU_BUTTON_HEIGHT = 60.0f;
+static const float FIRST_BUTTON_POSITION_Y = 380.0f;
+static const float BUTTON_SPACING = 90.0f;
+
+// Capa oscura de pausa y derrota (0 = transparente, 1 = negro total)
+static const float DARK_LAYER_OPACITY = 0.7f;
+
+// Pantalla de derrota
+static const int FINAL_SCORE_FONT_SIZE = 35;
+static const int FINAL_SCORE_POSITION_Y = 275;
+static const int FINAL_DETAIL_FONT_SIZE = 22;
+static const int FINAL_DETAIL_POSITION_Y = 322;
+
+// Vidas y puntaje (HUD)
+static const int INITIAL_LIVES = 3;
+static const int HUD_FONT_SIZE = 25;
+static const int HUD_MARGIN = 15;
+static const int HUD_LINE_SPACING = 30;
+
+// Ayuda de controles al empezar la partida
+static const float CONTROLS_HINT_DURATION = 6.0f;  // Segundos que se muestra
+static const float CONTROLS_HINT_FADE_TIME = 1.0f; // Ultimo segundo: se desvanece
+static const int CONTROLS_HINT_FONT_SIZE = 20;
+static const int CONTROLS_HINT_BOTTOM_MARGIN = 40;
+
+// Segundos que se ve la nave destruida antes de mostrar el GAME OVER
+static const float GAME_OVER_DELAY = 2.0f;
+
+// Power-up de bomba
+static const float POWERUP_SPAWN_INTERVAL = 15.0f; // Segundos sin power-up hasta que aparece uno
+static const float BOMB_FLASH_DURATION = 0.5f;     // Destello blanco al explotar
+static const float BOMB_FLASH_MAX_OPACITY = 0.8f;
+
+// OVNI enemigo
+static const float UFO_SPAWN_INTERVAL = 20.0f;     // Segundos sin OVNI hasta que aparece uno
+static const int UFO_POINTS = 5;                   // Puntos por destruir un OVNI (un asteroide da 1)
+
+// Tamaño de las explosiones
+static const float ASTEROID_EXPLOSION_SCALE = 2.4f; // Respecto del radio del asteroide
+static const float UFO_EXPLOSION_SIZE = 90.0f;
+static const float SHIP_EXPLOSION_SIZE = 100.0f;
+
+// Aparicion de asteroides
+static const int INITIAL_ASTEROIDS = 4;
+static const float SPAWN_INTERVAL = 5.0f;      // Segundos entre cada asteroide nuevo
+static const int MAX_ACTIVE_FOR_SPAWN = 8;     // No aparecen mas si ya hay estos
+
+static bool isPaused = false;
+static bool isShipDestroyed = false;               // Perdio la ultima vida
+static bool isGameOver = false;                    // Se esta mostrando la pantalla de derrota
+static float gameOverDelayLeft = 0.0f;
+static float controlsHintTimeLeft = 0.0f;
+static int lives = INITIAL_LIVES;
+static int asteroidsDestroyed = 0;                 // Con balas o con la bomba
+static int ufosDestroyed = 0;
+
+static Ship playerShip = {};
+static Bullet playerBullets[MAX_BULLETS] = {};
+static Bullet enemyBullets[MAX_BULLETS] = {};
+static Asteroid asteroids[MAX_ASTEROIDS] = {};
+static float spawnTimer = 0.0f;
+
+static PowerUp bombPowerUp = {};
+static float powerUpSpawnTimer = 0.0f;
+static float bombFlashTimeLeft = 0.0f;
+
+static Explosion explosions[MAX_EXPLOSIONS] = {};
+
+static Ufo enemyUfo = {};
+static float ufoSpawnTimer = 0.0f;
+
+static Button pauseButton = {};
+
+// Menu de pausa
+static Button resumeButton = {};
+static Button pauseMenuButton = {};
+
+// Menu de derrota
+static Button retryButton = {};
+static Button gameOverMenuButton = {};
+
+// Cada asteroide da 1 punto y cada OVNI da UFO_POINTS
+static int GetScore()
 {
-	static constexpr int TITLE_FONT_SIZE = 60;
-	static constexpr int TITLE_POSITION_Y = 200;
+	return asteroidsDestroyed + ufosDestroyed * UFO_POINTS;
+}
 
-	// Boton de pausa (arriba a la derecha)
-	static constexpr float PAUSE_BUTTON_WIDTH = 140.0f;
-	static constexpr float PAUSE_BUTTON_HEIGHT = 45.0f;
-	static constexpr float PAUSE_BUTTON_MARGIN = 15.0f;
+// Explosion del tamaño del asteroide, en su posicion
+static void ExplodeAsteroid(int asteroidIndex)
+{
+	const float size = asteroids[asteroidIndex].radius * ASTEROID_EXPLOSION_SCALE;
+	SpawnExplosion(explosions, asteroids[asteroidIndex].position, size);
+}
 
-	// Botones de los menus de pausa y derrota
-	static constexpr float MENU_BUTTON_WIDTH = 320.0f;
-	static constexpr float MENU_BUTTON_HEIGHT = 60.0f;
-	static constexpr float FIRST_BUTTON_POSITION_Y = 380.0f;
-	static constexpr float BUTTON_SPACING = 90.0f;
+// Explosion en la posicion del OVNI, que deja de estar en pantalla
+static void ExplodeUfo()
+{
+	SpawnExplosion(explosions, enemyUfo.position, UFO_EXPLOSION_SIZE);
+	enemyUfo.isActive = false;
+}
 
-	// Capa oscura de pausa y derrota (0 = transparente, 1 = negro total)
-	static constexpr float DARK_LAYER_OPACITY = 0.7f;
+// Clic izquierdo (o espacio) dispara.
+// Si el mouse esta sobre el boton de pausa no dispara,
+// asi el clic para pausar no tira una bala.
+static bool IsFirePressed()
+{
+	const bool clickedToFire = IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !IsButtonHovered(pauseButton);
 
-	// Pantalla de derrota
-	static constexpr int FINAL_SCORE_FONT_SIZE = 35;
-	static constexpr int FINAL_SCORE_POSITION_Y = 275;
-	static constexpr int FINAL_DETAIL_FONT_SIZE = 22;
-	static constexpr int FINAL_DETAIL_POSITION_Y = 322;
+	return clickedToFire || IsKeyPressed(KEY_SPACE);
+}
 
-	// Vidas y puntaje (HUD)
-	static constexpr int INITIAL_LIVES = 3;
-	static constexpr int HUD_FONT_SIZE = 25;
-	static constexpr int HUD_MARGIN = 15;
-	static constexpr int HUD_LINE_SPACING = 30;
+// Cada SPAWN_INTERVAL segundos aparece un asteroide grande
+static void UpdateAsteroidSpawn()
+{
+	spawnTimer += GetFrameTime();
 
-	// Ayuda de controles al empezar la partida
-	static constexpr float CONTROLS_HINT_DURATION = 6.0f;  // Segundos que se muestra
-	static constexpr float CONTROLS_HINT_FADE_TIME = 1.0f; // Ultimo segundo: se desvanece
-	static constexpr int CONTROLS_HINT_FONT_SIZE = 20;
-	static constexpr int CONTROLS_HINT_BOTTOM_MARGIN = 40;
-
-	// Segundos que se ve la nave destruida antes de mostrar el GAME OVER
-	static constexpr float GAME_OVER_DELAY = 2.0f;
-
-	// Power-up de bomba
-	static constexpr float POWERUP_SPAWN_INTERVAL = 15.0f; // Segundos sin power-up hasta que aparece uno
-	static constexpr float BOMB_FLASH_DURATION = 0.5f;     // Destello blanco al explotar
-	static constexpr float BOMB_FLASH_MAX_OPACITY = 0.8f;
-
-	// OVNI enemigo
-	static constexpr float UFO_SPAWN_INTERVAL = 20.0f;     // Segundos sin OVNI hasta que aparece uno
-	static constexpr int UFO_POINTS = 5;                   // Puntos por destruir un OVNI (un asteroide da 1)
-
-	// Tamaño de las explosiones
-	static constexpr float ASTEROID_EXPLOSION_SCALE = 2.4f; // Respecto del radio del asteroide
-	static constexpr float UFO_EXPLOSION_SIZE = 90.0f;
-	static constexpr float SHIP_EXPLOSION_SIZE = 100.0f;
-
-	// Aparicion de asteroides
-	static constexpr int INITIAL_ASTEROIDS = 4;
-	static constexpr float SPAWN_INTERVAL = 5.0f;      // Segundos entre cada asteroide nuevo
-	static constexpr int MAX_ACTIVE_FOR_SPAWN = 8;     // No aparecen mas si ya hay estos
-
-	static bool isPaused = false;
-	static bool isShipDestroyed = false;               // Perdio la ultima vida
-	static bool isGameOver = false;                    // Se esta mostrando la pantalla de derrota
-	static float gameOverDelayLeft = 0.0f;
-	static float controlsHintTimeLeft = 0.0f;
-	static int lives = INITIAL_LIVES;
-	static int asteroidsDestroyed = 0;                 // Con balas o con la bomba
-	static int ufosDestroyed = 0;
-
-	static ship::Ship playerShip = {};
-	static bullet::Bullet playerBullets[bullet::MAX_BULLETS] = {};
-	static bullet::Bullet enemyBullets[bullet::MAX_BULLETS] = {};
-	static asteroid::Asteroid asteroids[asteroid::MAX_ASTEROIDS] = {};
-	static float spawnTimer = 0.0f;
-
-	static powerup::PowerUp bombPowerUp = {};
-	static float powerUpSpawnTimer = 0.0f;
-	static float bombFlashTimeLeft = 0.0f;
-
-	static explosion::Explosion explosions[explosion::MAX_EXPLOSIONS] = {};
-
-	static ufo::Ufo enemyUfo = {};
-	static float ufoSpawnTimer = 0.0f;
-
-	static ui::Button pauseButton = {};
-
-	// Menu de pausa
-	static ui::Button resumeButton = {};
-	static ui::Button pauseMenuButton = {};
-
-	// Menu de derrota
-	static ui::Button retryButton = {};
-	static ui::Button gameOverMenuButton = {};
-
-	// Cada asteroide da 1 punto y cada OVNI da UFO_POINTS
-	static int GetScore()
+	if (spawnTimer >= SPAWN_INTERVAL)
 	{
-		return asteroidsDestroyed + ufosDestroyed * UFO_POINTS;
-	}
+		spawnTimer = 0.0f;
 
-	// Explosion del tamaño del asteroide, en su posicion
-	static void ExplodeAsteroid(int asteroidIndex)
-	{
-		const float size = asteroids[asteroidIndex].radius * ASTEROID_EXPLOSION_SCALE;
-		explosion::Spawn(explosions, asteroids[asteroidIndex].position, size);
-	}
-
-	// Explosion en la posicion del OVNI, que deja de estar en pantalla
-	static void ExplodeUfo()
-	{
-		explosion::Spawn(explosions, enemyUfo.position, UFO_EXPLOSION_SIZE);
-		enemyUfo.isActive = false;
-	}
-
-	// Clic izquierdo (o espacio) dispara.
-	// Si el mouse esta sobre el boton de pausa no dispara,
-	// asi el clic para pausar no tira una bala.
-	static bool IsFirePressed()
-	{
-		const bool clickedToFire = IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !ui::IsButtonHovered(pauseButton);
-
-		return clickedToFire || IsKeyPressed(KEY_SPACE);
-	}
-
-	// Cada SPAWN_INTERVAL segundos aparece un asteroide grande
-	static void UpdateAsteroidSpawn()
-	{
-		spawnTimer += GetFrameTime();
-
-		if (spawnTimer >= SPAWN_INTERVAL)
+		if (CountActiveAsteroids(asteroids) < MAX_ACTIVE_FOR_SPAWN)
 		{
-			spawnTimer = 0.0f;
-
-			if (asteroid::CountActive(asteroids) < MAX_ACTIVE_FOR_SPAWN)
-			{
-				asteroid::SpawnFromEdge(asteroids);
-			}
+			SpawnAsteroidFromEdge(asteroids);
 		}
 	}
+}
 
-	// Si una bala toca un asteroide, se apagan los dos (y el asteroide se divide)
-	static void CheckBulletAsteroidCollisions()
+// Si una bala toca un asteroide, se apagan los dos (y el asteroide se divide)
+static void CheckBulletAsteroidCollisions()
+{
+	for (int bulletIndex = 0; bulletIndex < MAX_BULLETS; bulletIndex++)
 	{
-		for (int bulletIndex = 0; bulletIndex < bullet::MAX_BULLETS; bulletIndex++)
+		if (!playerBullets[bulletIndex].isActive)
 		{
-			if (!playerBullets[bulletIndex].isActive)
-			{
-				continue;
-			}
-
-			for (int asteroidIndex = 0; asteroidIndex < asteroid::MAX_ASTEROIDS; asteroidIndex++)
-			{
-				if (!asteroids[asteroidIndex].isActive)
-				{
-					continue;
-				}
-
-				if (collision::AreCirclesColliding(playerBullets[bulletIndex].position, bullet::RADIUS,
-					asteroids[asteroidIndex].position, asteroids[asteroidIndex].radius))
-				{
-					playerBullets[bulletIndex].isActive = false;
-					ExplodeAsteroid(asteroidIndex);
-					asteroid::Destroy(asteroids, asteroidIndex);
-					audio::PlaySoundEffect(audio::SoundEffect::AsteroidExplosion);
-					asteroidsDestroyed++;
-
-					// Esta bala ya se gasto, pasa a la siguiente
-					break;
-				}
-			}
-		}
-	}
-
-	// Pierde una vida: reaparece en el centro, o si era la ultima, la nave queda destruida
-	static void LoseLife()
-	{
-		explosion::Spawn(explosions, playerShip.position, SHIP_EXPLOSION_SIZE);
-		audio::PlaySoundEffect(audio::SoundEffect::ShipExplosion);
-		lives--;
-
-		if (lives > 0)
-		{
-			ship::Respawn(playerShip);
-		}
-		else
-		{
-			// No muestra el GAME OVER de golpe: primero deja ver el choque
-			isShipDestroyed = true;
-			gameOverDelayLeft = GAME_OVER_DELAY;
-		}
-	}
-
-	// Si la nave toca un asteroide pierde una vida (salvo que sea invulnerable)
-	static void CheckShipAsteroidCollisions()
-	{
-		if (ship::IsInvulnerable(playerShip))
-		{
-			return;
+			continue;
 		}
 
-		for (int asteroidIndex = 0; asteroidIndex < asteroid::MAX_ASTEROIDS; asteroidIndex++)
+		for (int asteroidIndex = 0; asteroidIndex < MAX_ASTEROIDS; asteroidIndex++)
 		{
 			if (!asteroids[asteroidIndex].isActive)
 			{
 				continue;
 			}
 
-			if (collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
+			if (AreCirclesColliding(playerBullets[bulletIndex].position, BULLET_RADIUS,
 				asteroids[asteroidIndex].position, asteroids[asteroidIndex].radius))
 			{
-				// El asteroide tambien se rompe con el choque (pero no suma puntos)
+				playerBullets[bulletIndex].isActive = false;
 				ExplodeAsteroid(asteroidIndex);
-				asteroid::Destroy(asteroids, asteroidIndex);
-				LoseLife();
+				DestroyAsteroid(asteroids, asteroidIndex);
+				PlaySoundEffect(SoundEffect::AsteroidExplosion);
+				asteroidsDestroyed++;
 
-				// Un solo choque por frame
-				return;
+				// Esta bala ya se gasto, pasa a la siguiente
+				break;
 			}
 		}
 	}
+}
 
-	// Si no hay OVNI, cada UFO_SPAWN_INTERVAL segundos aparece uno. Si hay, se mueve y dispara
-	static void UpdateUfo()
+// Pierde una vida: reaparece en el centro, o si era la ultima, la nave queda destruida
+static void LoseLife()
+{
+	SpawnExplosion(explosions, playerShip.position, SHIP_EXPLOSION_SIZE);
+	PlaySoundEffect(SoundEffect::ShipExplosion);
+	lives--;
+
+	if (lives > 0)
 	{
+		RespawnShip(playerShip);
+	}
+	else
+	{
+		// No muestra el GAME OVER de golpe: primero deja ver el choque
+		isShipDestroyed = true;
+		gameOverDelayLeft = GAME_OVER_DELAY;
+	}
+}
+
+// Si la nave toca un asteroide pierde una vida (salvo que sea invulnerable)
+static void CheckShipAsteroidCollisions()
+{
+	if (IsShipInvulnerable(playerShip))
+	{
+		return;
+	}
+
+	for (int asteroidIndex = 0; asteroidIndex < MAX_ASTEROIDS; asteroidIndex++)
+	{
+		if (!asteroids[asteroidIndex].isActive)
+		{
+			continue;
+		}
+
+		if (AreCirclesColliding(playerShip.position, SHIP_COLLISION_RADIUS,
+			asteroids[asteroidIndex].position, asteroids[asteroidIndex].radius))
+		{
+			// El asteroide tambien se rompe con el choque (pero no suma puntos)
+			ExplodeAsteroid(asteroidIndex);
+			DestroyAsteroid(asteroids, asteroidIndex);
+			LoseLife();
+
+			// Un solo choque por frame
+			return;
+		}
+	}
+}
+
+// Si no hay OVNI, cada UFO_SPAWN_INTERVAL segundos aparece uno. Si hay, se mueve y dispara
+static void UpdateEnemyUfo()
+{
+	if (enemyUfo.isActive)
+	{
+		UpdateUfo(enemyUfo);
+
+		// Le dispara a la nave (si sigue viva)
+		if (!isShipDestroyed && ShouldUfoShoot(enemyUfo))
+		{
+			const float shotDirection = GetUfoShotDirection(enemyUfo, playerShip.position);
+
+			if (FireBullet(enemyBullets, enemyUfo.position, shotDirection, BulletType::Enemy))
+			{
+				PlaySoundEffect(SoundEffect::UfoShoot);
+			}
+		}
+	}
+	else
+	{
+		ufoSpawnTimer += GetFrameTime();
+
+		if (ufoSpawnTimer >= UFO_SPAWN_INTERVAL)
+		{
+			ufoSpawnTimer = 0.0f;
+			SpawnUfo(enemyUfo);
+		}
+	}
+
+	UpdateUfoHumSound(enemyUfo.isActive);
+}
+
+// Si una bala de la nave toca al OVNI, se destruyen los dos
+static void CheckBulletUfoCollisions()
+{
+	if (!enemyUfo.isActive)
+	{
+		return;
+	}
+
+	for (int bulletIndex = 0; bulletIndex < MAX_BULLETS; bulletIndex++)
+	{
+		if (playerBullets[bulletIndex].isActive &&
+			AreCirclesColliding(playerBullets[bulletIndex].position, BULLET_RADIUS,
+				enemyUfo.position, UFO_COLLISION_RADIUS))
+		{
+			playerBullets[bulletIndex].isActive = false;
+			ExplodeUfo();
+			ufosDestroyed++;
+			PlaySoundEffect(SoundEffect::AsteroidExplosion);
+			return;
+		}
+	}
+}
+
+// Si la nave choca con el OVNI o la toca una bala del OVNI, pierde una vida
+static void CheckShipUfoCollisions()
+{
+	if (IsShipInvulnerable(playerShip))
+	{
+		return;
+	}
+
+	// Choque con el OVNI: se destruye tambien (pero no suma puntos)
+	if (enemyUfo.isActive &&
+		AreCirclesColliding(playerShip.position, SHIP_COLLISION_RADIUS,
+			enemyUfo.position, UFO_COLLISION_RADIUS))
+	{
+		ExplodeUfo();
+		LoseLife();
+		return;
+	}
+
+	for (int bulletIndex = 0; bulletIndex < MAX_BULLETS; bulletIndex++)
+	{
+		if (enemyBullets[bulletIndex].isActive &&
+			AreCirclesColliding(playerShip.position, SHIP_COLLISION_RADIUS,
+				enemyBullets[bulletIndex].position, BULLET_RADIUS))
+		{
+			enemyBullets[bulletIndex].isActive = false;
+			LoseLife();
+
+			// Un solo golpe por frame
+			return;
+		}
+	}
+}
+
+// Si no hay power-up en pantalla, cada POWERUP_SPAWN_INTERVAL segundos aparece uno
+static void UpdateBombPowerUp()
+{
+	UpdatePowerUp(bombPowerUp);
+
+	if (bombPowerUp.isActive)
+	{
+		return;
+	}
+
+	powerUpSpawnTimer += GetFrameTime();
+
+	if (powerUpSpawnTimer >= POWERUP_SPAWN_INTERVAL)
+	{
+		powerUpSpawnTimer = 0.0f;
+		SpawnPowerUp(bombPowerUp, playerShip.position);
+	}
+}
+
+// Si la nave agarra la bomba, destruye todo lo que hay en pantalla (asteroides, OVNI y sus balas)
+static void CheckShipPowerUpCollision()
+{
+	if (!bombPowerUp.isActive)
+	{
+		return;
+	}
+
+	if (AreCirclesColliding(playerShip.position, SHIP_COLLISION_RADIUS,
+		bombPowerUp.position, POWERUP_COLLISION_RADIUS))
+	{
+		bombPowerUp.isActive = false;
+
+		// Todos los asteroides explotan a la vez
+		for (int asteroidIndex = 0; asteroidIndex < MAX_ASTEROIDS; asteroidIndex++)
+		{
+			if (asteroids[asteroidIndex].isActive)
+			{
+				ExplodeAsteroid(asteroidIndex);
+			}
+		}
+
+		asteroidsDestroyed += DestroyAllAsteroids(asteroids);
+
 		if (enemyUfo.isActive)
 		{
-			ufo::Update(enemyUfo);
-
-			// Le dispara a la nave (si sigue viva)
-			if (!isShipDestroyed && ufo::ShouldShoot(enemyUfo))
-			{
-				const float shotDirection = ufo::GetShotDirection(enemyUfo, playerShip.position);
-
-				if (bullet::Fire(enemyBullets, enemyUfo.position, shotDirection, bullet::BulletType::Enemy))
-				{
-					audio::PlaySoundEffect(audio::SoundEffect::UfoShoot);
-				}
-			}
-		}
-		else
-		{
-			ufoSpawnTimer += GetFrameTime();
-
-			if (ufoSpawnTimer >= UFO_SPAWN_INTERVAL)
-			{
-				ufoSpawnTimer = 0.0f;
-				ufo::Spawn(enemyUfo);
-			}
-		}
-
-		audio::UpdateUfoHum(enemyUfo.isActive);
-	}
-
-	// Si una bala de la nave toca al OVNI, se destruyen los dos
-	static void CheckBulletUfoCollisions()
-	{
-		if (!enemyUfo.isActive)
-		{
-			return;
-		}
-
-		for (int bulletIndex = 0; bulletIndex < bullet::MAX_BULLETS; bulletIndex++)
-		{
-			if (playerBullets[bulletIndex].isActive &&
-				collision::AreCirclesColliding(playerBullets[bulletIndex].position, bullet::RADIUS,
-					enemyUfo.position, ufo::COLLISION_RADIUS))
-			{
-				playerBullets[bulletIndex].isActive = false;
-				ExplodeUfo();
-				ufosDestroyed++;
-				audio::PlaySoundEffect(audio::SoundEffect::AsteroidExplosion);
-				return;
-			}
-		}
-	}
-
-	// Si la nave choca con el OVNI o la toca una bala del OVNI, pierde una vida
-	static void CheckShipUfoCollisions()
-	{
-		if (ship::IsInvulnerable(playerShip))
-		{
-			return;
-		}
-
-		// Choque con el OVNI: se destruye tambien (pero no suma puntos)
-		if (enemyUfo.isActive &&
-			collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
-				enemyUfo.position, ufo::COLLISION_RADIUS))
-		{
 			ExplodeUfo();
-			LoseLife();
-			return;
+			ufosDestroyed++;
 		}
 
-		for (int bulletIndex = 0; bulletIndex < bullet::MAX_BULLETS; bulletIndex++)
-		{
-			if (enemyBullets[bulletIndex].isActive &&
-				collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
-					enemyBullets[bulletIndex].position, bullet::RADIUS))
-			{
-				enemyBullets[bulletIndex].isActive = false;
-				LoseLife();
+		InitBullets(enemyBullets);
+		bombFlashTimeLeft = BOMB_FLASH_DURATION;
+		PlaySoundEffect(SoundEffect::Bomb);
+	}
+}
 
-				// Un solo golpe por frame
-				return;
+// Aca va la logica de la partida (nave, asteroides, OVNI, balas y power-up)
+static void UpdateMatch()
+{
+	// Sin vidas la nave ya no se mueve ni dispara, pero los asteroides siguen de fondo
+	if (!isShipDestroyed)
+	{
+		UpdateShip(playerShip);
+
+		if (IsFirePressed())
+		{
+			// Solo suena si de verdad salio una bala
+			if (FireBullet(playerBullets, GetShipNosePosition(playerShip), playerShip.rotation, BulletType::Player))
+			{
+				PlaySoundEffect(SoundEffect::Shoot);
 			}
 		}
 	}
 
-	// Si no hay power-up en pantalla, cada POWERUP_SPAWN_INTERVAL segundos aparece uno
-	static void UpdatePowerUp()
+	// El motor suena solo mientras la nave (viva) acelera
+	UpdateThrustSound(!isShipDestroyed && playerShip.isAccelerating);
+
+	UpdateBullets(playerBullets);
+	UpdateBullets(enemyBullets);
+
+	UpdateAsteroidSpawn();
+	UpdateAsteroids(asteroids);
+	UpdateEnemyUfo();
+
+	CheckBulletAsteroidCollisions();
+	CheckBulletUfoCollisions();
+
+	// Por separado: si el primer choque fue el ultimo, la nave ya no puede volver a chocar
+	if (!isShipDestroyed)
 	{
-		powerup::Update(bombPowerUp);
-
-		if (bombPowerUp.isActive)
-		{
-			return;
-		}
-
-		powerUpSpawnTimer += GetFrameTime();
-
-		if (powerUpSpawnTimer >= POWERUP_SPAWN_INTERVAL)
-		{
-			powerUpSpawnTimer = 0.0f;
-			powerup::Spawn(bombPowerUp, playerShip.position);
-		}
+		CheckShipAsteroidCollisions();
 	}
 
-	// Si la nave agarra la bomba, destruye todo lo que hay en pantalla (asteroides, OVNI y sus balas)
-	static void CheckShipPowerUpCollision()
+	if (!isShipDestroyed)
 	{
-		if (!bombPowerUp.isActive)
-		{
-			return;
-		}
-
-		if (collision::AreCirclesColliding(playerShip.position, ship::COLLISION_RADIUS,
-			bombPowerUp.position, powerup::COLLISION_RADIUS))
-		{
-			bombPowerUp.isActive = false;
-
-			// Todos los asteroides explotan a la vez
-			for (int asteroidIndex = 0; asteroidIndex < asteroid::MAX_ASTEROIDS; asteroidIndex++)
-			{
-				if (asteroids[asteroidIndex].isActive)
-				{
-					ExplodeAsteroid(asteroidIndex);
-				}
-			}
-
-			asteroidsDestroyed += asteroid::DestroyAll(asteroids);
-
-			if (enemyUfo.isActive)
-			{
-				ExplodeUfo();
-				ufosDestroyed++;
-			}
-
-			bullet::InitAll(enemyBullets);
-			bombFlashTimeLeft = BOMB_FLASH_DURATION;
-			audio::PlaySoundEffect(audio::SoundEffect::Bomb);
-		}
+		CheckShipUfoCollisions();
 	}
 
-	// Aca va la logica de la partida (nave, asteroides, OVNI, balas y power-up)
-	static void UpdateMatch()
+	UpdateBombPowerUp();
+
+	if (!isShipDestroyed)
 	{
-		// Sin vidas la nave ya no se mueve ni dispara, pero los asteroides siguen de fondo
-		if (!isShipDestroyed)
-		{
-			ship::Update(playerShip);
-
-			if (IsFirePressed())
-			{
-				// Solo suena si de verdad salio una bala
-				if (bullet::Fire(playerBullets, ship::GetNosePosition(playerShip), playerShip.rotation, bullet::BulletType::Player))
-				{
-					audio::PlaySoundEffect(audio::SoundEffect::Shoot);
-				}
-			}
-		}
-
-		// El motor suena solo mientras la nave (viva) acelera
-		audio::UpdateThrust(!isShipDestroyed && playerShip.isAccelerating);
-
-		bullet::UpdateAll(playerBullets);
-		bullet::UpdateAll(enemyBullets);
-
-		UpdateAsteroidSpawn();
-		asteroid::UpdateAll(asteroids);
-		UpdateUfo();
-
-		CheckBulletAsteroidCollisions();
-		CheckBulletUfoCollisions();
-
-		// Por separado: si el primer choque fue el ultimo, la nave ya no puede volver a chocar
-		if (!isShipDestroyed)
-		{
-			CheckShipAsteroidCollisions();
-		}
-
-		if (!isShipDestroyed)
-		{
-			CheckShipUfoCollisions();
-		}
-
-		UpdatePowerUp();
-
-		if (!isShipDestroyed)
-		{
-			CheckShipPowerUpCollision();
-		}
-
-		explosion::UpdateAll(explosions);
-
-		if (bombFlashTimeLeft > 0.0f)
-		{
-			bombFlashTimeLeft -= GetFrameTime();
-		}
-
-		if (controlsHintTimeLeft > 0.0f)
-		{
-			controlsHintTimeLeft -= GetFrameTime();
-		}
+		CheckShipPowerUpCollision();
 	}
 
-	// Despues del ultimo choque: espera unos segundos y muestra el GAME OVER
-	static void UpdateShipDestroyed()
+	UpdateExplosions(explosions);
+
+	if (bombFlashTimeLeft > 0.0f)
 	{
-		UpdateMatch();
-
-		gameOverDelayLeft -= GetFrameTime();
-
-		if (gameOverDelayLeft <= 0.0f)
-		{
-			isGameOver = true;
-			audio::PlaySoundEffect(audio::SoundEffect::GameOver);
-		}
+		bombFlashTimeLeft -= GetFrameTime();
 	}
 
-	static void DrawHud()
+	if (controlsHintTimeLeft > 0.0f)
 	{
-		DrawText(TextFormat("VIDAS: %d", lives), HUD_MARGIN, HUD_MARGIN, HUD_FONT_SIZE, RAYWHITE);
-		DrawText(TextFormat("PUNTAJE: %d", GetScore()), HUD_MARGIN, HUD_MARGIN + HUD_LINE_SPACING, HUD_FONT_SIZE, RAYWHITE);
+		controlsHintTimeLeft -= GetFrameTime();
+	}
+}
+
+// Despues del ultimo choque: espera unos segundos y muestra el GAME OVER
+static void UpdateShipDestroyed()
+{
+	UpdateMatch();
+
+	gameOverDelayLeft -= GetFrameTime();
+
+	if (gameOverDelayLeft <= 0.0f)
+	{
+		isGameOver = true;
+		PlaySoundEffect(SoundEffect::GameOver);
+	}
+}
+
+static void DrawHud()
+{
+	DrawText(TextFormat("VIDAS: %d", lives), HUD_MARGIN, HUD_MARGIN, HUD_FONT_SIZE, RAYWHITE);
+	DrawText(TextFormat("PUNTAJE: %d", GetScore()), HUD_MARGIN, HUD_MARGIN + HUD_LINE_SPACING, HUD_FONT_SIZE, RAYWHITE);
+}
+
+// Controles abajo de la pantalla durante los primeros segundos
+static void DrawControlsHint()
+{
+	if (controlsHintTimeLeft <= 0.0f)
+	{
+		return;
 	}
 
-	// Controles abajo de la pantalla durante los primeros segundos
-	static void DrawControlsHint()
+	// Opaco hasta el ultimo segundo, ahi se va desvaneciendo
+	float opacity = controlsHintTimeLeft / CONTROLS_HINT_FADE_TIME;
+
+	if (opacity > 1.0f)
 	{
-		if (controlsHintTimeLeft <= 0.0f)
-		{
-			return;
-		}
-
-		// Opaco hasta el ultimo segundo, ahi se va desvaneciendo
-		float opacity = controlsHintTimeLeft / CONTROLS_HINT_FADE_TIME;
-
-		if (opacity > 1.0f)
-		{
-			opacity = 1.0f;
-		}
-
-		const int positionY = config::SCREEN_HEIGHT - CONTROLS_HINT_BOTTOM_MARGIN;
-
-		ui::DrawCenteredText("Mouse: apuntar  -  Clic derecho: acelerar  -  Clic izquierdo: disparar",
-			positionY, CONTROLS_HINT_FONT_SIZE, Fade(LIGHTGRAY, opacity));
+		opacity = 1.0f;
 	}
 
-	// Destello blanco que se desvanece al explotar la bomba
-	static void DrawBombFlash()
-	{
-		if (bombFlashTimeLeft <= 0.0f)
-		{
-			return;
-		}
+	const int positionY = SCREEN_HEIGHT - CONTROLS_HINT_BOTTOM_MARGIN;
 
-		const float opacity = bombFlashTimeLeft / BOMB_FLASH_DURATION * BOMB_FLASH_MAX_OPACITY;
-		DrawRectangle(0, 0, config::SCREEN_WIDTH, config::SCREEN_HEIGHT, Fade(WHITE, opacity));
+	DrawCenteredText("Mouse: apuntar  -  Clic derecho: acelerar  -  Clic izquierdo: disparar",
+		positionY, CONTROLS_HINT_FONT_SIZE, Fade(LIGHTGRAY, opacity));
+}
+
+// Destello blanco que se desvanece al explotar la bomba
+static void DrawBombFlash()
+{
+	if (bombFlashTimeLeft <= 0.0f)
+	{
+		return;
 	}
 
-	// Aca se dibuja la partida
-	static void DrawMatch()
+	const float opacity = bombFlashTimeLeft / BOMB_FLASH_DURATION * BOMB_FLASH_MAX_OPACITY;
+	DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Fade(WHITE, opacity));
+}
+
+// Aca se dibuja la partida
+static void DrawMatch()
+{
+	DrawAsteroids(asteroids);
+	DrawPowerUp(bombPowerUp);
+	DrawUfo(enemyUfo);
+	DrawBullets(enemyBullets);
+	DrawBullets(playerBullets);
+
+	if (isShipDestroyed)
 	{
-		asteroid::DrawAll(asteroids);
-		powerup::Draw(bombPowerUp);
-		ufo::Draw(enemyUfo);
-		bullet::DrawAll(enemyBullets);
-		bullet::DrawAll(playerBullets);
-
-		if (isShipDestroyed)
-		{
-			ship::DrawDestroyed(playerShip);
-		}
-		else
-		{
-			ship::Draw(playerShip);
-		}
-
-		explosion::DrawAll(explosions);
-		DrawBombFlash();
-		DrawHud();
-		DrawControlsHint();
+		DrawDestroyedShip(playerShip);
+	}
+	else
+	{
+		DrawShip(playerShip);
 	}
 
-	// Capa oscura sobre la partida (para pausa y derrota)
-	static void DrawDarkLayer()
+	DrawExplosions(explosions);
+	DrawBombFlash();
+	DrawHud();
+	DrawControlsHint();
+}
+
+// Capa oscura sobre la partida (para pausa y derrota)
+static void DrawDarkLayer()
+{
+	DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Fade(BLACK, DARK_LAYER_OPACITY));
+}
+
+static void DrawPauseOverlay()
+{
+	DrawDarkLayer();
+
+	DrawCenteredText("PAUSA", TITLE_POSITION_Y, TITLE_FONT_SIZE, RAYWHITE);
+
+	DrawButton(resumeButton);
+	DrawButton(pauseMenuButton);
+}
+
+static void DrawGameOverOverlay()
+{
+	DrawDarkLayer();
+
+	DrawCenteredText("GAME OVER", TITLE_POSITION_Y, TITLE_FONT_SIZE, RED);
+	DrawCenteredText(TextFormat("PUNTAJE: %d", GetScore()),
+		FINAL_SCORE_POSITION_Y, FINAL_SCORE_FONT_SIZE, RAYWHITE);
+	DrawCenteredText(TextFormat("Asteroides destruidos: %d   -   OVNIs destruidos: %d", asteroidsDestroyed, ufosDestroyed),
+		FINAL_DETAIL_POSITION_Y, FINAL_DETAIL_FONT_SIZE, LIGHTGRAY);
+
+	DrawButton(retryButton);
+	DrawButton(gameOverMenuButton);
+}
+
+// Menu de derrota: volver a jugar o ir al menu
+static Screen UpdateGameOver()
+{
+	if (IsButtonClicked(gameOverMenuButton) || IsKeyPressed(KEY_ESCAPE))
 	{
-		DrawRectangle(0, 0, config::SCREEN_WIDTH, config::SCREEN_HEIGHT, Fade(BLACK, DARK_LAYER_OPACITY));
+		return Screen::Menu;
 	}
 
-	static void DrawPauseOverlay()
+	if (IsButtonClicked(retryButton))
 	{
-		DrawDarkLayer();
-
-		ui::DrawCenteredText("PAUSA", TITLE_POSITION_Y, TITLE_FONT_SIZE, RAYWHITE);
-
-		ui::DrawButton(resumeButton);
-		ui::DrawButton(pauseMenuButton);
+		// Reinicia todo: vidas, puntaje, nave y asteroides
+		InitGameplay();
+		return Screen::Gameplay;
 	}
 
-	static void DrawGameOverOverlay()
+	// Los asteroides siguen moviendose de fondo
+	UpdateMatch();
+
+	return Screen::Gameplay;
+}
+
+// Menu de pausa: continuar o ir al menu
+static void UpdatePause(bool pauseKeyPressed, Screen& nextScreen)
+{
+	if (IsButtonClicked(pauseMenuButton))
 	{
-		DrawDarkLayer();
-
-		ui::DrawCenteredText("GAME OVER", TITLE_POSITION_Y, TITLE_FONT_SIZE, RED);
-		ui::DrawCenteredText(TextFormat("PUNTAJE: %d", GetScore()),
-			FINAL_SCORE_POSITION_Y, FINAL_SCORE_FONT_SIZE, RAYWHITE);
-		ui::DrawCenteredText(TextFormat("Asteroides destruidos: %d   -   OVNIs destruidos: %d", asteroidsDestroyed, ufosDestroyed),
-			FINAL_DETAIL_POSITION_Y, FINAL_DETAIL_FONT_SIZE, LIGHTGRAY);
-
-		ui::DrawButton(retryButton);
-		ui::DrawButton(gameOverMenuButton);
+		nextScreen = Screen::Menu;
+		return;
 	}
 
-	// Menu de derrota: volver a jugar o ir al menu
-	static game::Screen UpdateGameOver()
-	{
-		if (ui::IsButtonClicked(gameOverMenuButton) || IsKeyPressed(KEY_ESCAPE))
-		{
-			return game::Screen::Menu;
-		}
-
-		if (ui::IsButtonClicked(retryButton))
-		{
-			// Reinicia todo: vidas, puntaje, nave y asteroides
-			Init();
-			return game::Screen::Gameplay;
-		}
-
-		// Los asteroides siguen moviendose de fondo
-		UpdateMatch();
-
-		return game::Screen::Gameplay;
-	}
-
-	// Menu de pausa: continuar o ir al menu
-	static void UpdatePause(bool pauseKeyPressed, game::Screen& nextScreen)
-	{
-		if (ui::IsButtonClicked(pauseMenuButton))
-		{
-			nextScreen = game::Screen::Menu;
-			return;
-		}
-
-		if (ui::IsButtonClicked(resumeButton) || pauseKeyPressed)
-		{
-			isPaused = false;
-		}
-	}
-
-	void Init()
+	if (IsButtonClicked(resumeButton) || pauseKeyPressed)
 	{
 		isPaused = false;
-		isShipDestroyed = false;
-		isGameOver = false;
-		gameOverDelayLeft = 0.0f;
-		controlsHintTimeLeft = CONTROLS_HINT_DURATION;
-		lives = INITIAL_LIVES;
-		asteroidsDestroyed = 0;
-		ufosDestroyed = 0;
+	}
+}
 
-		// Arranca en el centro e invulnerable (parpadeando) unos segundos,
-		// para que el jugador se acostumbre a los controles
-		ship::Respawn(playerShip);
-		bullet::InitAll(playerBullets);
-		bullet::InitAll(enemyBullets);
-		explosion::InitAll(explosions);
+void InitGameplay()
+{
+	isPaused = false;
+	isShipDestroyed = false;
+	isGameOver = false;
+	gameOverDelayLeft = 0.0f;
+	controlsHintTimeLeft = CONTROLS_HINT_DURATION;
+	lives = INITIAL_LIVES;
+	asteroidsDestroyed = 0;
+	ufosDestroyed = 0;
 
-		asteroid::InitAll(asteroids);
-		spawnTimer = 0.0f;
+	// Arranca en el centro e invulnerable (parpadeando) unos segundos,
+	// para que el jugador se acostumbre a los controles
+	RespawnShip(playerShip);
+	InitBullets(playerBullets);
+	InitBullets(enemyBullets);
+	InitExplosions(explosions);
 
-		bombPowerUp = powerup::Create();
-		powerUpSpawnTimer = 0.0f;
-		bombFlashTimeLeft = 0.0f;
+	InitAsteroids(asteroids);
+	spawnTimer = 0.0f;
 
-		enemyUfo = ufo::Create();
-		ufoSpawnTimer = 0.0f;
+	bombPowerUp = CreatePowerUp();
+	powerUpSpawnTimer = 0.0f;
+	bombFlashTimeLeft = 0.0f;
 
-		for (int i = 0; i < INITIAL_ASTEROIDS; i++)
-		{
-			asteroid::SpawnFromEdge(asteroids);
-		}
+	enemyUfo = CreateUfo();
+	ufoSpawnTimer = 0.0f;
 
-		const float pauseButtonX = static_cast<float>(config::SCREEN_WIDTH) - PAUSE_BUTTON_WIDTH - PAUSE_BUTTON_MARGIN;
-		pauseButton = ui::CreateButton(pauseButtonX, PAUSE_BUTTON_MARGIN, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, "PAUSA");
-
-		const float secondButtonPositionY = FIRST_BUTTON_POSITION_Y + BUTTON_SPACING;
-
-		resumeButton = ui::CreateCenteredButton(FIRST_BUTTON_POSITION_Y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "CONTINUAR");
-		pauseMenuButton = ui::CreateCenteredButton(secondButtonPositionY, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "MENU");
-
-		retryButton = ui::CreateCenteredButton(FIRST_BUTTON_POSITION_Y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "VOLVER A JUGAR");
-		gameOverMenuButton = ui::CreateCenteredButton(secondButtonPositionY, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "MENU");
+	for (int i = 0; i < INITIAL_ASTEROIDS; i++)
+	{
+		SpawnAsteroidFromEdge(asteroids);
 	}
 
-	game::Screen Update()
+	const float pauseButtonX = static_cast<float>(SCREEN_WIDTH) - PAUSE_BUTTON_WIDTH - PAUSE_BUTTON_MARGIN;
+	pauseButton = CreateButton(pauseButtonX, PAUSE_BUTTON_MARGIN, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, "PAUSA");
+
+	const float secondButtonPositionY = FIRST_BUTTON_POSITION_Y + BUTTON_SPACING;
+
+	resumeButton = CreateCenteredButton(FIRST_BUTTON_POSITION_Y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "CONTINUAR");
+	pauseMenuButton = CreateCenteredButton(secondButtonPositionY, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "MENU");
+
+	retryButton = CreateCenteredButton(FIRST_BUTTON_POSITION_Y, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "VOLVER A JUGAR");
+	gameOverMenuButton = CreateCenteredButton(secondButtonPositionY, MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT, "MENU");
+}
+
+Screen UpdateGameplay()
+{
+	if (isGameOver)
 	{
-		if (isGameOver)
-		{
-			return UpdateGameOver();
-		}
-
-		// Mientras se ve la nave destruida no se puede pausar
-		if (isShipDestroyed)
-		{
-			UpdateShipDestroyed();
-			return game::Screen::Gameplay;
-		}
-
-		// P o ESC tambien pausan/reanudan (opcional, por teclado)
-		const bool pauseKeyPressed = IsKeyPressed(KEY_P) || IsKeyPressed(KEY_ESCAPE);
-
-		game::Screen nextScreen = game::Screen::Gameplay;
-
-		if (isPaused)
-		{
-			UpdatePause(pauseKeyPressed, nextScreen);
-		}
-		else if (ui::IsButtonClicked(pauseButton) || pauseKeyPressed)
-		{
-			isPaused = true;
-
-			// En pausa el motor y el OVNI no suenan
-			audio::UpdateThrust(false);
-			audio::UpdateUfoHum(false);
-		}
-		else
-		{
-			UpdateMatch();
-		}
-
-		return nextScreen;
+		return UpdateGameOver();
 	}
 
-	void Draw()
+	// Mientras se ve la nave destruida no se puede pausar
+	if (isShipDestroyed)
 	{
-		DrawMatch();
+		UpdateShipDestroyed();
+		return Screen::Gameplay;
+	}
 
-		if (isGameOver)
-		{
-			DrawGameOverOverlay();
-		}
-		else if (isPaused)
-		{
-			DrawPauseOverlay();
-		}
-		else if (!isShipDestroyed)
-		{
-			ui::DrawButton(pauseButton);
-		}
+	// P o ESC tambien pausan/reanudan (opcional, por teclado)
+	const bool pauseKeyPressed = IsKeyPressed(KEY_P) || IsKeyPressed(KEY_ESCAPE);
+
+	Screen nextScreen = Screen::Gameplay;
+
+	if (isPaused)
+	{
+		UpdatePause(pauseKeyPressed, nextScreen);
+	}
+	else if (IsButtonClicked(pauseButton) || pauseKeyPressed)
+	{
+		isPaused = true;
+
+		// En pausa el motor y el OVNI no suenan
+		UpdateThrustSound(false);
+		UpdateUfoHumSound(false);
+	}
+	else
+	{
+		UpdateMatch();
+	}
+
+	return nextScreen;
+}
+
+void DrawGameplay()
+{
+	DrawMatch();
+
+	if (isGameOver)
+	{
+		DrawGameOverOverlay();
+	}
+	else if (isPaused)
+	{
+		DrawPauseOverlay();
+	}
+	else if (!isShipDestroyed)
+	{
+		DrawButton(pauseButton);
 	}
 }
