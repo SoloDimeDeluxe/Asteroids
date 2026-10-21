@@ -2,6 +2,9 @@
 
 #include "game/screen.h"
 
-void InitCredits();
-Screen UpdateCredits();
-void DrawCredits();
+namespace ReyesCuadra
+{
+	void InitCredits();
+	Screen UpdateCredits();
+	void DrawCredits();
+}

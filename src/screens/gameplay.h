@@ -2,7 +2,10 @@
 
 #include "game/screen.h"
 
-// Reinicia la partida
-void InitGameplay();
-Screen UpdateGameplay();
-void DrawGameplay();
+namespace ReyesCuadra
+{
+	// Reinicia la partida
+	void InitGameplay();
+	Screen UpdateGameplay();
+	void DrawGameplay();
+}

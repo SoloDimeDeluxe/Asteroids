@@ -2,6 +2,9 @@
 
 #include "game/screen.h"
 
-void InitMenu();
-Screen UpdateMenu();
-void DrawMenu();
+namespace ReyesCuadra
+{
+	void InitMenu();
+	Screen UpdateMenu();
+	void DrawMenu();
+}

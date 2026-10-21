@@ -2,6 +2,6 @@
 
 int main()
 {
-	RunGame();
+	ReyesCuadra::RunGame();
 	return 0;
 }

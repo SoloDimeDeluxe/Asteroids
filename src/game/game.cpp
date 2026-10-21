@@ -17,154 +17,157 @@
 #include "utils/config.h"
 #include "utils/ui.h"
 
-static Screen currentScreen = Screen::Menu;
-
-// Cambia de pantalla y la reinicia
-static void ChangeScreen(Screen newScreen)
+namespace ReyesCuadra
 {
-	currentScreen = newScreen;
+	static Screen currentScreen = Screen::Menu;
 
-	// Al salir del gameplay el motor y el OVNI dejan de sonar
-	UpdateThrustSound(false);
-	UpdateUfoHumSound(false);
-
-	switch (currentScreen)
+	// Cambia de pantalla y la reinicia
+	static void ChangeScreen(Screen newScreen)
 	{
-	case Screen::Menu:
-		InitMenu();
-		PlayMusicTrack(MusicTrack::Menu);
-		break;
-	case Screen::Gameplay:
-		InitGameplay();
-		PlayMusicTrack(MusicTrack::Gameplay);
-		break;
-	case Screen::Instructions:
-		InitInstructions();
-		PlayMusicTrack(MusicTrack::Menu);
-		break;
-	case Screen::Credits:
-		InitCredits();
-		PlayMusicTrack(MusicTrack::Menu);
-		break;
-	case Screen::Exit:
-		break;
-	}
-}
+		currentScreen = newScreen;
 
-static void InitGame()
-{
-	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, GAME_TITLE);
-	SetTargetFPS(TARGET_FPS);
+		// Al salir del gameplay el motor y el OVNI dejan de sonar
+		UpdateThrustSound(false);
+		UpdateUfoHumSound(false);
 
-	// ESC no cierra la ventana: lo maneja cada pantalla
-	SetExitKey(KEY_NULL);
-
-	// Las rutas "res/..." se buscan desde la carpeta del .exe,
-	// asi funciona igual desde Visual Studio o abriendo el .exe suelto
-	ChangeDirectory(GetApplicationDirectory());
-
-	InitAudio();
-
-	LoadShipTextures();
-	LoadAsteroidTextures();
-	LoadBulletTextures();
-	LoadUfoTexture();
-	LoadExplosionTexture();
-	LoadPowerUpTexture();
-	LoadCursorTexture();
-
-	// Se usa la mira propia en vez del cursor del sistema
-	HideCursor();
-
-	ChangeScreen(Screen::Menu);
-}
-
-// Actualiza la pantalla activa
-static void UpdateGame()
-{
-	UpdateMusicTrack();
-
-	Screen nextScreen = currentScreen;
-
-	switch (currentScreen)
-	{
-	case Screen::Menu:
-		nextScreen = UpdateMenu();
-		break;
-	case Screen::Gameplay:
-		nextScreen = UpdateGameplay();
-		break;
-	case Screen::Instructions:
-		nextScreen = UpdateInstructions();
-		break;
-	case Screen::Credits:
-		nextScreen = UpdateCredits();
-		break;
-	case Screen::Exit:
-		break;
+		switch (currentScreen)
+		{
+		case Screen::Menu:
+			InitMenu();
+			PlayMusicTrack(MusicTrack::Menu);
+			break;
+		case Screen::Gameplay:
+			InitGameplay();
+			PlayMusicTrack(MusicTrack::Gameplay);
+			break;
+		case Screen::Instructions:
+			InitInstructions();
+			PlayMusicTrack(MusicTrack::Menu);
+			break;
+		case Screen::Credits:
+			InitCredits();
+			PlayMusicTrack(MusicTrack::Menu);
+			break;
+		case Screen::Exit:
+			break;
+		}
 	}
 
-	if (nextScreen != currentScreen)
+	static void InitGame()
 	{
-		ChangeScreen(nextScreen);
-	}
-}
+		InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, GAME_TITLE);
+		SetTargetFPS(TARGET_FPS);
 
-// Dibuja la pantalla activa
-static void DrawGame()
-{
-	BeginDrawing();
-	ClearBackground(BLACK);
+		// ESC no cierra la ventana: lo maneja cada pantalla
+		SetExitKey(KEY_NULL);
 
-	switch (currentScreen)
-	{
-	case Screen::Menu:
-		DrawMenu();
-		break;
-	case Screen::Gameplay:
-		DrawGameplay();
-		break;
-	case Screen::Instructions:
-		DrawInstructions();
-		break;
-	case Screen::Credits:
-		DrawCredits();
-		break;
-	case Screen::Exit:
-		break;
+		// Las rutas "res/..." se buscan desde la carpeta del .exe,
+		// asi funciona igual desde Visual Studio o abriendo el .exe suelto
+		ChangeDirectory(GetApplicationDirectory());
+
+		InitAudio();
+
+		LoadShipTextures();
+		LoadAsteroidTextures();
+		LoadBulletTextures();
+		LoadUfoTexture();
+		LoadExplosionTexture();
+		LoadPowerUpTexture();
+		LoadCursorTexture();
+
+		// Se usa la mira propia en vez del cursor del sistema
+		HideCursor();
+
+		ChangeScreen(Screen::Menu);
 	}
 
-	// La mira va ultima para quedar encima de todo
-	DrawCursor();
-
-	EndDrawing();
-}
-
-static void CloseGame()
-{
-	UnloadShipTextures();
-	UnloadAsteroidTextures();
-	UnloadBulletTextures();
-	UnloadUfoTexture();
-	UnloadExplosionTexture();
-	UnloadPowerUpTexture();
-	UnloadCursorTexture();
-
-	CloseAudio();
-
-	CloseWindow();
-}
-
-void RunGame()
-{
-	InitGame();
-
-	// Loop principal
-	while (!WindowShouldClose() && currentScreen != Screen::Exit)
+	// Actualiza la pantalla activa
+	static void UpdateGame()
 	{
-		UpdateGame();
-		DrawGame();
+		UpdateMusicTrack();
+
+		Screen nextScreen = currentScreen;
+
+		switch (currentScreen)
+		{
+		case Screen::Menu:
+			nextScreen = UpdateMenu();
+			break;
+		case Screen::Gameplay:
+			nextScreen = UpdateGameplay();
+			break;
+		case Screen::Instructions:
+			nextScreen = UpdateInstructions();
+			break;
+		case Screen::Credits:
+			nextScreen = UpdateCredits();
+			break;
+		case Screen::Exit:
+			break;
+		}
+
+		if (nextScreen != currentScreen)
+		{
+			ChangeScreen(nextScreen);
+		}
 	}
 
-	CloseGame();
+	// Dibuja la pantalla activa
+	static void DrawGame()
+	{
+		BeginDrawing();
+		ClearBackground(BLACK);
+
+		switch (currentScreen)
+		{
+		case Screen::Menu:
+			DrawMenu();
+			break;
+		case Screen::Gameplay:
+			DrawGameplay();
+			break;
+		case Screen::Instructions:
+			DrawInstructions();
+			break;
+		case Screen::Credits:
+			DrawCredits();
+			break;
+		case Screen::Exit:
+			break;
+		}
+
+		// La mira va ultima para quedar encima de todo
+		DrawCursor();
+
+		EndDrawing();
+	}
+
+	static void CloseGame()
+	{
+		UnloadShipTextures();
+		UnloadAsteroidTextures();
+		UnloadBulletTextures();
+		UnloadUfoTexture();
+		UnloadExplosionTexture();
+		UnloadPowerUpTexture();
+		UnloadCursorTexture();
+
+		CloseAudio();
+
+		CloseWindow();
+	}
+
+	void RunGame()
+	{
+		InitGame();
+
+		// Loop principal
+		while (!WindowShouldClose() && currentScreen != Screen::Exit)
+		{
+			UpdateGame();
+			DrawGame();
+		}
+
+		CloseGame();
+	}
 }
