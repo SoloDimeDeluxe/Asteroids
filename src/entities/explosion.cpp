@@ -81,9 +81,11 @@ namespace ReyesCuadra
 				continue;
 			}
 
-			// Cuadro actual segun el tiempo que paso
+			// Cuadro actual segun el tiempo que paso (misma idea que el fuego de la nave,
+			// pero sin % porque no se repite: al terminar la explosion se desactiva)
 			int frame = static_cast<int>(explosions[i].elapsedTime / FRAME_TIME);
 
+			// Por seguridad: nunca recortar un cuadro que no existe
 			if (frame >= FRAME_COUNT)
 			{
 				frame = FRAME_COUNT - 1;

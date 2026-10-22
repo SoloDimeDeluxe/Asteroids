@@ -82,7 +82,9 @@ namespace ReyesCuadra
 		ufo.aliveTime += deltaTime;
 		ufo.shootTimer -= deltaTime;
 
-		// Avanza de costado y sube/baja siguiendo una onda (seno)
+		// Zigzag: en X avanza a velocidad constante (directionX es 1 o -1 segun el lado).
+		// En Y sigue una onda: sin() oscila entre -1 y 1, por la amplitud sube y baja
+		// ZIGZAG_AMPLITUDE pixeles alrededor de baseY. ZIGZAG_SPEED cambia que tan rapido ondula
 		ufo.position.x += ufo.directionX * SPEED * deltaTime;
 		ufo.position.y = ufo.baseY + std::sin(ufo.aliveTime * ZIGZAG_SPEED) * ZIGZAG_AMPLITUDE;
 
@@ -100,13 +102,15 @@ namespace ReyesCuadra
 			return false;
 		}
 
+		// Temporizador: shootTimer baja con deltaTime en UpdateUfo; al llegar a 0 dispara y se reinicia
 		ufo.shootTimer = SHOOT_INTERVAL;
 		return true;
 	}
 
 	float GetUfoShotDirection(const Ufo& ufo, Vector2 targetPosition)
 	{
-		// Angulo hacia el objetivo (igual que la nave hacia el mouse) mas un error al azar
+		// Angulo hacia el objetivo con atan2 (igual que la nave hacia el mouse)
+		// mas un error al azar de +/- MAX_AIM_ERROR, para que se pueda esquivar
 		const float aimDirection = std::atan2(targetPosition.y - ufo.position.y, targetPosition.x - ufo.position.x);
 
 		return aimDirection + RandomFloat(-MAX_AIM_ERROR, MAX_AIM_ERROR);
@@ -119,7 +123,10 @@ namespace ReyesCuadra
 			return;
 		}
 
-		// Se inclina para el lado al que se mueve en el zigzag
+		// Se inclina para el lado al que se mueve en el zigzag (solo visual).
+		// El coseno es la derivada del seno: indica si la onda esta subiendo o bajando
+		// y que tan empinada. Por eso se inclina mas a mitad de la subida y queda derecho arriba y abajo.
+		// Por directionX para que se incline bien vaya a la izquierda o a la derecha
 		const float tilt = std::cos(ufo.aliveTime * ZIGZAG_SPEED) * MAX_TILT_DEGREES * ufo.directionX;
 
 		const Rectangle source = { 0.0f, 0.0f, static_cast<float>(ufoTexture.width), static_cast<float>(ufoTexture.height) };

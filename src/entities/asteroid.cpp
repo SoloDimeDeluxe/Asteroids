@@ -46,7 +46,8 @@ namespace ReyesCuadra
 	static const char* const MEDIUM_TEXTURE_PATH = "res/textures/asteroid_medium.png";
 	static const char* const SMALL_TEXTURE_PATH = "res/textures/asteroid_small.png";
 
-	// La roca ocupa el 92% del ancho de la imagen (el resto es transparente)
+	// La roca ocupa el 92% del ancho de la imagen (el resto es borde transparente).
+	// Se usa al dibujar para que la roca coincida con el circulo de colision
 	static const float TEXTURE_FILL = 0.92f;
 
 	static Texture2D largeTexture = {};
@@ -65,10 +66,12 @@ namespace ReyesCuadra
 			return smallTexture;
 		}
 
+		// No se llega nunca (el switch cubre todos los casos), pero con warnings en nivel 4
+		// el compilador avisa que la funcion podria terminar sin devolver nada
 		return smallTexture;
-	}
+		}
 
-	static float GetRadius(AsteroidSize size)
+		static float GetRadius(AsteroidSize size)
 	{
 		switch (size)
 		{
@@ -150,7 +153,8 @@ namespace ReyesCuadra
 
 		Vector2 position = {};
 
-		// Elige un borde al azar
+		// Elige un borde al azar: GetRandomValue da un entero de 0 a 3
+		// y static_cast lo convierte al enum (0 = Top, 1 = Right, 2 = Bottom, 3 = Left)
 		const ScreenEdge edge = static_cast<ScreenEdge>(GetRandomValue(0, SCREEN_EDGE_COUNT - 1));
 
 		switch (edge)
@@ -169,7 +173,8 @@ namespace ReyesCuadra
 			break;
 		}
 
-		// Apunta a un punto al azar de la zona central
+		// Apunta a un punto al azar de la zona central (con atan2, igual que la nave al mouse),
+		// asi siempre entra a la pantalla y no pasa rozando un borde
 		const float targetX = RandomFloat(TARGET_AREA_MARGIN, screenWidth - TARGET_AREA_MARGIN);
 		const float targetY = RandomFloat(TARGET_AREA_MARGIN, screenHeight - TARGET_AREA_MARGIN);
 		const float direction = std::atan2(targetY - position.y, targetX - position.x);
@@ -179,7 +184,8 @@ namespace ReyesCuadra
 
 	void DestroyAsteroid(Asteroid asteroids[], int index)
 	{
-		// Copia los datos antes de liberar el lugar
+		// Copia los datos antes de liberar el lugar: los pedazos nuevos pueden ocupar
+		// este mismo lugar del arreglo y se perderian la posicion y la velocidad
 		const Asteroid destroyed = asteroids[index];
 
 		asteroids[index].isActive = false;
@@ -192,10 +198,11 @@ namespace ReyesCuadra
 
 		const AsteroidSize smallerSize = (destroyed.size == AsteroidSize::Large) ? AsteroidSize::Medium : AsteroidSize::Small;
 
-		// Direccion en la que venia (angulo de su vector velocidad)
+		// Direccion en la que venia: atan2 de su vector velocidad
 		const float direction = std::atan2(destroyed.velocity.y, destroyed.velocity.x);
 
-		// Un pedazo para cada lado
+		// Un pedazo para cada lado: uno a +SPLIT_ANGLE y otro a -SPLIT_ANGLE (35 grados),
+		// asi salen abriendose en forma de V siguiendo el camino que traia
 		SpawnAsteroid(asteroids, destroyed.position, direction + SPLIT_ANGLE, smallerSize);
 		SpawnAsteroid(asteroids, destroyed.position, direction - SPLIT_ANGLE, smallerSize);
 	}
@@ -262,7 +269,8 @@ namespace ReyesCuadra
 
 			const Texture2D& texture = GetTexture(asteroids[i].size);
 
-			// Tamaño en pantalla para que la roca coincida con el radio de colision
+			// Tamaño en pantalla: diametro / TEXTURE_FILL agranda la imagen para que la roca
+			// (que ocupa el 92%) coincida con el radio de colision
 			const float drawSize = asteroids[i].radius * 2.0f / TEXTURE_FILL;
 
 			const Rectangle source = { 0.0f, 0.0f, static_cast<float>(texture.width), static_cast<float>(texture.height) };

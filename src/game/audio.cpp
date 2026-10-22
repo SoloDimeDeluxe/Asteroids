@@ -22,7 +22,8 @@ namespace ReyesCuadra
 	static Music menuMusic = {};
 	static Music gameplayMusic = {};
 
-	// Musica que esta sonando ahora (nullptr = ninguna)
+	// Musica que esta sonando ahora (nullptr = ninguna).
+	// Es un puntero para poder comparar si la musica pedida es la misma que ya suena
 	static Music* currentMusic = nullptr;
 
 	static Sound LoadSoundWithVolume(const char* path, float volume)
@@ -105,7 +106,8 @@ namespace ReyesCuadra
 	{
 		Music* newMusic = GetMusic(track);
 
-		// Si ya esta sonando esa musica, no hace nada
+		// Si ya esta sonando esa musica, no hace nada (asi no se reinicia
+		// al pasar del menu a los creditos, que usan la misma)
 		if (newMusic == currentMusic)
 		{
 			return;
@@ -120,6 +122,8 @@ namespace ReyesCuadra
 		PlayMusicStream(*currentMusic);
 	}
 
+	// Un Sound se carga entero en memoria; un Music es largo y se lee de a pedazos (streaming).
+	// UpdateMusicStream carga el pedazo siguiente: si no se llama cada frame, la musica se corta
 	void UpdateMusicTrack()
 	{
 		if (currentMusic != nullptr)

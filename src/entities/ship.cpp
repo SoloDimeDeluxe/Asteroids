@@ -44,8 +44,12 @@ namespace ReyesCuadra
 		return { 0.0f, 0.0f, static_cast<float>(texture.width), static_cast<float>(texture.height) };
 	}
 
-	// Dibuja la parte "source" de una textura, rotada alrededor de "origin" y con ese punto ubicado en "position".
-	// "tint" tiñe la imagen (WHITE = colores originales)
+	// Dibuja una textura rotada con DrawTexturePro:
+	// - source: que parte de la imagen se dibuja (la imagen entera o un cuadro de la animacion)
+	// - position + width/height: donde y de que tamaño se dibuja en pantalla (asi se escala)
+	// - origin: pivote de rotacion, medido desde la esquina de la imagen dibujada.
+	//   Ese punto es el que queda ubicado en "position" y alrededor de el gira
+	// - tint: tiñe la imagen (WHITE = colores originales, RED = nave destruida)
 	static void DrawRotatedTexture(const Texture2D& texture, Rectangle source, Vector2 position, float width, float height,
 		Vector2 origin, float rotationRadians, Color tint)
 	{
@@ -55,7 +59,13 @@ namespace ReyesCuadra
 		DrawTexturePro(texture, source, destination, origin, rotationRadians * RAD2DEG, tint);
 	}
 
-	// Rota un punto relativo a la nave y lo pasa a coordenadas de pantalla
+	// Rota un punto relativo a la nave y lo pasa a coordenadas de pantalla.
+	// "localX/localY" es el punto como si la nave mirara a la derecha (ej: la punta es (22, 0)).
+	// Es la formula de rotacion de un punto (matriz de rotacion de algebra):
+	//   x' = x * cos - y * sin
+	//   y' = x * sin + y * cos
+	// y despues se le suma la posicion de la nave.
+	// Con localY = 0 queda: avanzar "localX" pixeles desde el centro en la direccion en la que mira
 	static Vector2 ToScreen(const Ship& ship, float localX, float localY)
 	{
 		const float cosine = std::cos(ship.rotation);
@@ -70,26 +80,33 @@ namespace ReyesCuadra
 
 	static void RotateTowardMouse(Ship& ship)
 	{
-		// Vector de la nave al mouse
+		// Vector de la nave al mouse (restar posiciones: destino - origen)
 		const Vector2 mousePosition = GetMousePosition();
 		const float distanceX = mousePosition.x - ship.position.x;
 		const float distanceY = mousePosition.y - ship.position.y;
 
-		// atan2 da el angulo de ese vector
+		// atan2(y, x) da el angulo de ese vector en radianes.
+		// Se usa atan2 y no atan(y / x) porque distingue los 4 cuadrantes
+		// (sabe si el mouse esta a la izquierda o a la derecha) y no falla si x es 0
 		ship.rotation = std::atan2(distanceY, distanceX);
 	}
 
 	static void Accelerate(Ship& ship, float deltaTime)
 	{
-		// Direccion de la nave (vector de largo 1)
+		// Direccion de la nave: cos y sin pasan el angulo a un vector de largo 1
+		// (0 rad = (1, 0) a la derecha; en pantalla Y crece hacia abajo)
 		const float directionX = std::cos(ship.rotation);
 		const float directionY = std::sin(ship.rotation);
 
-		// La aceleracion se suma a la velocidad
+		// La aceleracion se suma a la velocidad (por deltaTime: es "por segundo")
 		ship.velocity.x += directionX * ACCELERATION * deltaTime;
 		ship.velocity.y += directionY * ACCELERATION * deltaTime;
 
-		// Si supera la velocidad maxima, se achica sin cambiar la direccion
+		// Si supera la velocidad maxima, se achica sin cambiar la direccion:
+		// 1) speed = largo del vector velocidad (Pitagoras)
+		// 2) velocidad / speed = vector de largo 1 en la misma direccion (normalizar)
+		// 3) * MAX_SPEED = queda justo en la velocidad maxima
+		// Aca si se usa sqrt porque hace falta el largo real (y es un solo calculo por frame)
 		const float speed = std::sqrt(ship.velocity.x * ship.velocity.x + ship.velocity.y * ship.velocity.y);
 
 		if (speed > MAX_SPEED)
@@ -136,7 +153,8 @@ namespace ReyesCuadra
 			ship.flameAnimationTime += deltaTime;
 		}
 
-		// Gravedad cero: nunca frena sola, sigue con la misma velocidad
+		// Inercia (gravedad cero): no hay friccion, la velocidad solo cambia al acelerar.
+		// Para frenar hay que acelerar en sentido contrario
 		ship.position.x += ship.velocity.x * deltaTime;
 		ship.position.y += ship.velocity.y * deltaTime;
 
@@ -152,7 +170,9 @@ namespace ReyesCuadra
 
 	void DrawShip(const Ship& ship)
 	{
-		// Mientras es invulnerable parpadea: se dibuja un intervalo si y otro no
+		// Mientras es invulnerable parpadea: se dibuja un intervalo si y otro no.
+		// Tiempo restante / BLINK_INTERVAL = numero de intervalo (ej: 2.40 / 0.15 = 16).
+		// % 2 da 0 en los pares y 1 en los impares: en los impares no se dibuja
 		if (IsShipInvulnerable(ship))
 		{
 			const int blinkStep = static_cast<int>(ship.invulnerableTimeLeft / BLINK_INTERVAL);
@@ -164,11 +184,15 @@ namespace ReyesCuadra
 		}
 
 		// Fuego del motor (atras de la nave), solo mientras acelera.
-		// Su pivote queda a la derecha de la imagen, en el centro de la nave,
-		// asi gira junto con ella y siempre queda pegado al motor.
+		// Truco del pivote: el fuego se dibuja en la posicion de la nave (su centro), pero con el
+		// origin corrido a la derecha de la imagen del fuego, a TAIL_LENGTH + su ancho.
+		// Asi la imagen queda atras de la nave, pegada al motor, y como gira alrededor
+		// del centro de la nave siempre queda atras aunque la nave rote (sin calcular con cos/sin).
 		if (ship.isAccelerating)
 		{
-			// Cuadro de la animacion segun el tiempo acelerando (vuelve a empezar al terminar)
+			// Animacion con hoja de sprites: la imagen tiene FLAME_FRAME_COUNT cuadros uno al lado del otro.
+			// tiempo / tiempo por cuadro = cuantos cuadros pasaron; % FLAME_FRAME_COUNT hace que de la vuelta (0,1,2,3,0...).
+			// El rectangulo source recorta solo ese cuadro (empieza en ancho de cuadro * numero de cuadro)
 			const int frame = static_cast<int>(ship.flameAnimationTime / FLAME_FRAME_TIME) % FLAME_FRAME_COUNT;
 			const float frameWidth = static_cast<float>(flameTexture.width) / static_cast<float>(FLAME_FRAME_COUNT);
 			const Rectangle flameSource = { frameWidth * static_cast<float>(frame), 0.0f, frameWidth, static_cast<float>(flameTexture.height) };

@@ -127,6 +127,8 @@ namespace ReyesCuadra
 	}
 
 	// Clic izquierdo (o espacio) dispara.
+	// IsMouseButtonPressed es true solo en el frame en que se aprieta (un clic = una bala).
+	// IsMouseButtonDown seria true todos los frames mientras se mantiene (se usa para acelerar).
 	// Si el mouse esta sobre el boton de pausa no dispara,
 	// asi el clic para pausar no tira una bala.
 	static bool IsFirePressed()
@@ -198,7 +200,8 @@ namespace ReyesCuadra
 		}
 		else
 		{
-			// No muestra el GAME OVER de golpe: primero deja ver el choque
+			// No muestra el GAME OVER de golpe: primero deja ver la nave destruida y la explosion
+			// durante GAME_OVER_DELAY segundos (isShipDestroyed) y despues pasa a isGameOver
 			isShipDestroyed = true;
 			gameOverDelayLeft = GAME_OVER_DELAY;
 		}
@@ -376,7 +379,8 @@ namespace ReyesCuadra
 		}
 	}
 
-	// Aca va la logica de la partida (nave, asteroides, OVNI, balas y power-up)
+	// Aca va la logica de la partida (nave, asteroides, OVNI, balas y power-up).
+	// En pausa no se llama a esta funcion, por eso todo queda congelado
 	static void UpdateMatch()
 	{
 		// Sin vidas la nave ya no se mueve ni dispara, pero los asteroides siguen de fondo
@@ -407,7 +411,8 @@ namespace ReyesCuadra
 		CheckBulletAsteroidCollisions();
 		CheckBulletUfoCollisions();
 
-		// Por separado: si el primer choque fue el ultimo, la nave ya no puede volver a chocar
+		// Por separado y volviendo a chequear isShipDestroyed: cada chequeo sale con return
+		// despues del primer choque, asi no se pueden perder dos vidas en el mismo frame
 		if (!isShipDestroyed)
 		{
 			CheckShipAsteroidCollisions();
@@ -492,7 +497,7 @@ namespace ReyesCuadra
 		DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Fade(WHITE, opacity));
 	}
 
-	// Aca se dibuja la partida
+	// Aca se dibuja la partida. El orden importa: lo ultimo que se dibuja queda arriba
 	static void DrawMatch()
 	{
 		DrawAsteroids(asteroids);

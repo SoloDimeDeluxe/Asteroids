@@ -9,6 +9,9 @@ namespace ReyesCuadra
 		const float screenWidth = static_cast<float>(SCREEN_WIDTH);
 		const float screenHeight = static_cast<float>(SCREEN_HEIGHT);
 
+		// El margen (el tamaño del objeto) hace que primero salga del todo
+		// y recien ahi aparezca del otro lado (si no, desapareceria de golpe a medio salir)
+
 		// Horizontal
 		if (position.x < -margin)
 		{

@@ -63,7 +63,9 @@ namespace ReyesCuadra
 	{
 		Vector2 position = GetRandomPosition();
 
-		// Busca un lugar lejos de la nave (si no lo encuentra, usa el ultimo)
+		// Busca un lugar lejos de la nave: prueba posiciones al azar mientras queden intentos
+		// y la posicion siga cerca. El limite de intentos evita un loop infinito
+		// (si no encuentra, usa la ultima)
 		for (int attempt = 0; attempt < MAX_SPAWN_ATTEMPTS && !IsFarEnough(position, avoidPosition); attempt++)
 		{
 			position = GetRandomPosition();
@@ -107,6 +109,8 @@ namespace ReyesCuadra
 			}
 		}
 
+		// Latido: sin() oscila entre -1 y 1; por PULSE_AMOUNT (0.12) y mas 1 la escala
+		// queda entre 0.88 y 1.12 (se agranda y achica un 12%)
 		const float scale = 1.0f + std::sin(powerUp.timeLeft * PULSE_SPEED) * PULSE_AMOUNT;
 		const float size = DRAW_SIZE * scale;
 

@@ -43,6 +43,7 @@ namespace ReyesCuadra
 
 	bool IsButtonClicked(const Button& button)
 	{
+		// Se activa al soltar el clic (Released), como los botones de Windows
 		const bool isClicked = IsButtonHovered(button) && IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
 
 		// Todos los botones hacen el mismo sonido al apretarlos

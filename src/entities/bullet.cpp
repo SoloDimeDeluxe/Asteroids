@@ -38,18 +38,23 @@ namespace ReyesCuadra
 		enemyTexture = LoadTexture(ENEMY_TEXTURE_PATH);
 	}
 
+	// Sistema de "pool": las balas viven en un arreglo de tamaño fijo (MAX_BULLETS).
+	// No se crean ni se borran: cada lugar tiene isActive.
+	// - Disparar = buscar un lugar con isActive en false y activarlo
+	// - Desaparecer = poner isActive en false (el lugar queda libre para otra bala)
+	// Asi no se usa memoria dinamica (new/delete). Asteroides y explosiones usan lo mismo
 	void InitBullets(Bullet bullets[])
 	{
 		for (int i = 0; i < MAX_BULLETS; i++)
 		{
-			bullets[i] = {};
+			bullets[i] = {}; // Las llaves vacias ponen todos los campos en 0
 			bullets[i].isActive = false;
 		}
 	}
 
 	bool FireBullet(Bullet bullets[], Vector2 position, float rotation, BulletType type)
 	{
-		// Busca el primer lugar libre
+		// Busca el primer lugar libre del arreglo
 		for (int i = 0; i < MAX_BULLETS; i++)
 		{
 			if (!bullets[i].isActive)
@@ -57,6 +62,7 @@ namespace ReyesCuadra
 				const float speed = GetSpeed(type);
 
 				bullets[i].position = position;
+				// cos y sin pasan el angulo a una direccion de largo 1; por la rapidez da la velocidad
 				bullets[i].velocity.x = std::cos(rotation) * speed;
 				bullets[i].velocity.y = std::sin(rotation) * speed;
 				bullets[i].timeLeft = GetLifeTime(type);
@@ -67,7 +73,7 @@ namespace ReyesCuadra
 			}
 		}
 
-		// Si no hay lugar libre, no dispara
+		// Si no hay lugar libre, no dispara. Devuelve false para que no suene el disparo
 		return false;
 	}
 

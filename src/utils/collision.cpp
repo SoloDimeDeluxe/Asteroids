@@ -11,8 +11,12 @@ namespace ReyesCuadra
 		// Pitagoras: distancia^2 = distanciaX^2 + distanciaY^2
 		const float squaredDistance = distanceX * distanceX + distanceY * distanceY;
 
-		// Se tocan si la distancia es menor o igual a la suma de los radios
-		// (las dos partes al cuadrado, asi no hace falta la raiz)
+		// Dos circulos se tocan si la distancia entre centros <= suma de los radios.
+		// La distancia real seria sqrt(squaredDistance), pero la raiz es costosa y esto
+		// se chequea muchas veces por frame (cada bala contra cada asteroide).
+		// Truco: si a y b son positivos, a <= b es lo mismo que a*a <= b*b.
+		// Entonces se comparan los dos valores al cuadrado y se evita la raiz.
+		// Ejemplo: centros a 30 px, radios 20 y 15 -> 30*30 = 900 <= 35*35 = 1225 -> se tocan
 		const float radiusSum = radiusA + radiusB;
 
 		return squaredDistance <= radiusSum * radiusSum;

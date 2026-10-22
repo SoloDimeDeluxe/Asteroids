@@ -58,10 +58,11 @@ namespace ReyesCuadra
 		InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, GAME_TITLE);
 		SetTargetFPS(TARGET_FPS);
 
-		// ESC no cierra la ventana: lo maneja cada pantalla
+		// Por defecto raylib cierra la ventana con ESC. Se desactiva porque ESC se usa para pausar y volver
 		SetExitKey(KEY_NULL);
 
-		// Las rutas "res/..." se buscan desde la carpeta del .exe,
+		// Las rutas "res/..." se buscan desde la carpeta de trabajo. Desde Visual Studio esa carpeta
+		// es la del proyecto, no la del .exe. Esto la cambia a la carpeta del .exe,
 		// asi funciona igual desde Visual Studio o abriendo el .exe suelto
 		ChangeDirectory(GetApplicationDirectory());
 
